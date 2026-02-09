@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- FUNGSI PEMBANTU (HELPERS) ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function getUserRole() {
+      return getUserData().role;
+    }
+    
+    function isAdmin() {
+      let role = getUserRole();
+      return isSignedIn() && (role == 'admin' || role == 'developer');
+    }
+    
+    function isStaff() {
+      let role = getUserRole();
+      return isSignedIn() && (
+        role == 'admin' || 
+        role == 'developer' || 
+        role == 'Staf' || 
+        role == 'Guru' || 
+        role == 'Wali Kelas' || 
+        role == 'kepala_madrasah'
+      );
+    }
+
+    // --- ATURAN KOLEKSI ---
+
+    // 1. Profil Pengguna
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow delete: if isAdmin();
+    }
+
+    // 2. Data Master Siswa (PENTING: Get publik untuk verifikasi pendaftaran via NISN)
+    match /students/{nisn} {
+      allow get: if true; 
+      allow list: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // 3. Data Master Guru (PENTING: Get publik untuk verifikasi pendaftaran via NIP)
+    match /teachers/{nip_nik} {
+      allow get: if true; 
+      allow list: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // 4. Akademik & Jadwal
+    match /classes/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    match /subjects/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    match /schedules/{id} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // 5. Kehadiran / Presensi (Hyper Scan)
+    match /attendance/{recordId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // 6. Layanan Surat Digital (PTSP)
+    match /letters/{letterId} {
+      allow read: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow create: if isSignedIn();
+      allow update, delete: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.userId);
+    }
+
+    // 7. Jurnal & Tugas
+    match /journals/{id} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    
+    match /assignments/{id} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // 8. Penilaian (Grades)
+    match /grades/{id} {
+      // Siswa hanya bisa melihat nilainya sendiri berdasarkan studentId dalam dokumen
+      allow read: if isSignedIn() && (isStaff() || request.auth.uid == resource.data.studentId);
+      allow write: if isStaff();
+    }
+
+    // 9. Manajemen Klaim Akun
+    match /claim_requests/{id} {
+      allow create: if isSignedIn();
+      allow read: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow update: if isStaff();
+      allow delete: if isAdmin();
+    }
+
+    // 10. Log Keamanan & Audit
+    match /login_logs/{id} {
+      allow create: if isSignedIn();
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId);
+    }
+    
+    match /audit_logs/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // 11. Konten Statis & Pengaturan
+    match /academic_years/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /about_content/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /payments/{id} {
+      allow read: if isStaff() || (isSignedIn() && request.auth.uid == resource.data.userId);
+      allow write: if isStaff();
+    }
+
+    // 12. Poin Disiplin
+    match /discipline_logs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+    
+    match /violations_master/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // DEFAULT: Tolak akses jika tidak terdefinisi (Kecuali Admin)
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
