@@ -88,7 +88,6 @@ const App: React.FC = () => {
                           setUserRole(role);
                           setCurrentView(prev => (prev === ViewState.LOGIN || prev === ViewState.REGISTER) ? ViewState.DASHBOARD : prev);
                       } else {
-                          // Akun baru didefinisikan sebagai Tamu
                           setUserRole(UserRole.TAMU);
                           setCurrentView(prev => (prev === ViewState.LOGIN || prev === ViewState.REGISTER) ? ViewState.DASHBOARD : prev);
                       }
@@ -137,6 +136,11 @@ const App: React.FC = () => {
 
   const backToDashboard = () => handleNavigate(ViewState.DASHBOARD);
 
+  // Role Group Definitions
+  const staffAbove = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH];
+  const adminDevOnly = [UserRole.ADMIN, UserRole.DEVELOPER];
+  const devOnly = [UserRole.DEVELOPER];
+
   if (authLoading) {
       return (
           <div className="fixed inset-0 h-screen w-full flex flex-col items-center justify-center bg-[#020617] z-[100]">
@@ -168,7 +172,26 @@ const App: React.FC = () => {
       case ViewState.MADRASAH_INFO: return <MadrasahInfo onBack={backToDashboard} />;
       case ViewState.KEMENAG_HUB: return <KemenagHub onBack={backToDashboard} />;
       case ViewState.SETTINGS: return <Settings onBack={backToDashboard} onNavigate={handleNavigate} onLogout={handleLogout} isDarkMode={isDarkTheme} onToggleTheme={toggleTheme} userRole={userRole} />;
-      // ... (Protected Routes remains the same logic)
+      
+      // PROTECTED ROUTES
+      case ViewState.CLASSES: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><ClassList onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.SCANNER: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><QRScanner onBack={backToDashboard} /></ProtectedRoute>;
+      case ViewState.ATTENDANCE_HISTORY: return <AttendanceHistory onBack={backToDashboard} onNavigate={handleNavigate} userRole={userRole} />;
+      case ViewState.PRESENSI: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><Presensi onBack={backToDashboard} onNavigate={handleNavigate} /></ProtectedRoute>;
+      case ViewState.CONTENT_GENERATION: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><ContentGeneration onBack={backToDashboard} /></ProtectedRoute>;
+      case ViewState.REPORTS: return <ProtectedRoute allowedRoles={adminDevOnly} userRole={userRole} onBack={backToDashboard}><Reports onBack={backToDashboard} /></ProtectedRoute>;
+      case ViewState.JOURNAL: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><TeachingJournal onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.ASSIGNMENTS: return <Assignments onBack={backToDashboard} userRole={userRole} />;
+      case ViewState.GRADES:
+      case ViewState.REPORT_CARDS: return <Grades onBack={backToDashboard} userRole={userRole} />;
+      case ViewState.STUDENTS: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><StudentData onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.TEACHERS: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><TeacherData onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.LETTERS: return <Letters onBack={backToDashboard} userRole={userRole} />;
+      case ViewState.POINTS: return <PointsView onBack={backToDashboard} />;
+      case ViewState.CLAIM_MANAGEMENT: return <ProtectedRoute allowedRoles={adminDevOnly} userRole={userRole} onBack={backToDashboard}><ClaimManagement onBack={backToDashboard} /></ProtectedRoute>;
+      case ViewState.CREATE_ACCOUNT: return <ProtectedRoute allowedRoles={adminDevOnly} userRole={userRole} onBack={backToDashboard}><CreateAccount onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.DEVELOPER: return <ProtectedRoute allowedRoles={devOnly} userRole={userRole} onBack={backToDashboard}><DeveloperConsole onBack={backToDashboard} /></ProtectedRoute>;
+      
       default: return <Dashboard onNavigate={handleNavigate} isDarkMode={isDarkTheme} onToggleTheme={toggleTheme} userRole={userRole} onLogout={handleLogout} />;
     }
   };
