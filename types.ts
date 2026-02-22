@@ -117,6 +117,7 @@ export interface Student {
   nisn: string;
   nik?: string;
   email?: string;
+  emailLower?: string;
   tempatLahir?: string;
   tanggalLahir?: string;
   tingkatRombel: string;
@@ -153,6 +154,8 @@ export interface Student {
   peminatan?: string;
   accountStatus?: string;
   linkedUserId?: string;
+  authUid?: string;
+  isClaimed?: boolean;
   disciplinePoints?: number;
 }
 
@@ -189,9 +192,11 @@ export interface Teacher {
   status: 'PNS' | 'PPPK' | 'GTY' | 'Honorer';
   phone?: string;
   email?: string;
+  emailLower?: string;
   birthDate?: string;
   address?: string;
   linkedUserId?: string;
+  authUid?: string;
 }
 
 export type LetterStatus = 'Pending' | 'Verified' | 'Validated' | 'Signed' | 'Ditolak';

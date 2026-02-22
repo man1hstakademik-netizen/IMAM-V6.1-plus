@@ -1,15 +1,18 @@
-# Firebase Functions: Auto-link `uidAuth`
+# Firebase Functions: Auto-link akun ke profil master
 
-Function `autoFillUidAuth` berjalan saat akun Firebase Auth dibuat (`auth.user().onCreate`) dan akan:
+Function `autoLinkAccount` berjalan saat akun Firebase Auth dibuat (`auth.user().onCreate`) dan akan:
 
 1. Ambil `email` dari user Auth.
-2. Cari dokumen pada `collectionGroup('students')` dan `collectionGroup('teachers')`.
-3. Isi `uidAuth` jika belum terisi.
-4. Set `emailLower`, `accountLinked`, timestamp, dan custom claims (`role`, `schoolId`, `linkedProfilePath`).
+2. Cari dokumen pada koleksi `students` dan `teachers` berdasarkan `email`/`emailLower`.
+3. Jika role cocok dan unik:
+   - **Student:** isi `authUid`, `linkedUserId`, `isClaimed`.
+   - **Teacher:** isi `authUid`, `linkedUserId`.
+4. Set custom claims (`role`, `studentId`/`teacherId`, `linkedProfilePath`).
 
-## Catatan data
-- Simpan email di dokumen profil dalam huruf kecil (`emailLower`) untuk matching konsisten.
-- Hindari email duplikat lintas koleksi `students` dan `teachers`.
+## Guardrails
+- Tidak overwrite jika `authUid` sudah terisi UID lain.
+- Hentikan proses jika email duplikat.
+- Hentikan proses jika email muncul di student dan teacher sekaligus (ambiguous role).
 
 ## Deploy
 ```bash

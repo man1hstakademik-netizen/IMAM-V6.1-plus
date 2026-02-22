@@ -3,125 +3,123 @@ import * as admin from 'firebase-admin';
 
 admin.initializeApp();
 
-interface LinkTarget {
-  role: 'student' | 'teacher';
-  ref: FirebaseFirestore.DocumentReference;
-  data: FirebaseFirestore.DocumentData;
-}
+const db = admin.firestore();
 
-const buildEmailCandidates = (email: string): string[] => {
-  const normalized = email.trim().toLowerCase();
-  return Array.from(new Set([normalized, email.trim()]));
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+
+const findUniqueByEmail = async (collection: 'students' | 'teachers', email: string) => {
+  const direct = await db.collection(collection).where('email', '==', email).limit(2).get();
+
+  if (direct.size > 1) {
+    functions.logger.error('Duplicate email found', { collection, email, matches: direct.size });
+    return { doc: null, duplicate: true };
+  }
+
+  if (!direct.empty) {
+    return { doc: direct.docs[0], duplicate: false };
+  }
+
+  const lower = await db.collection(collection).where('emailLower', '==', email).limit(2).get();
+
+  if (lower.size > 1) {
+    functions.logger.error('Duplicate emailLower found', { collection, email, matches: lower.size });
+    return { doc: null, duplicate: true };
+  }
+
+  return { doc: lower.empty ? null : lower.docs[0], duplicate: false };
 };
 
-const findFirstByEmail = async (
-  collectionGroupName: 'students' | 'teachers',
-  emailCandidates: string[]
-): Promise<FirebaseFirestore.QueryDocumentSnapshot | null> => {
-  const db = admin.firestore();
-
-  for (const candidate of emailCandidates) {
-    const directMatch = await db
-      .collectionGroup(collectionGroupName)
-      .where('email', '==', candidate)
-      .limit(2)
-      .get();
-
-    if (directMatch.size > 1) {
-      functions.logger.error('Duplicate email detected', {
-        collectionGroupName,
-        email: candidate,
-        matches: directMatch.size,
-      });
-      return null;
-    }
-
-    if (!directMatch.empty) {
-      return directMatch.docs[0];
-    }
-
-    const loweredMatch = await db
-      .collectionGroup(collectionGroupName)
-      .where('emailLower', '==', candidate.toLowerCase())
-      .limit(2)
-      .get();
-
-    if (loweredMatch.size > 1) {
-      functions.logger.error('Duplicate emailLower detected', {
-        collectionGroupName,
-        email: candidate.toLowerCase(),
-        matches: loweredMatch.size,
-      });
-      return null;
-    }
-
-    if (!loweredMatch.empty) {
-      return loweredMatch.docs[0];
-    }
-  }
-
-  return null;
-};
-
-const findLinkTarget = async (email: string): Promise<LinkTarget | null> => {
-  const emailCandidates = buildEmailCandidates(email);
-
-  const [studentDoc, teacherDoc] = await Promise.all([
-    findFirstByEmail('students', emailCandidates),
-    findFirstByEmail('teachers', emailCandidates),
-  ]);
-
-  if (studentDoc && teacherDoc) {
-    functions.logger.error('Ambiguous email: found both student and teacher record', {
-      email,
-      studentPath: studentDoc.ref.path,
-      teacherPath: teacherDoc.ref.path,
-    });
-    return null;
-  }
-
-  if (studentDoc) {
-    return { role: 'student', ref: studentDoc.ref, data: studentDoc.data() };
-  }
-
-  if (teacherDoc) {
-    return { role: 'teacher', ref: teacherDoc.ref, data: teacherDoc.data() };
-  }
-
-  return null;
-};
-
-export const autoFillUidAuth = functions.auth.user().onCreate(async (user) => {
+export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
   if (!user.email) {
     functions.logger.info('Skip auto-link: auth user has no email', { uid: user.uid });
     return;
   }
 
-  const target = await findLinkTarget(user.email);
-  if (!target) {
-    functions.logger.info('No student/teacher found for auth email', {
+  const email = normalizeEmail(user.email);
+
+  const [studentResult, teacherResult] = await Promise.all([
+    findUniqueByEmail('students', email),
+    findUniqueByEmail('teachers', email),
+  ]);
+
+  if (studentResult.duplicate || teacherResult.duplicate) {
+    functions.logger.error('Skip auto-link: duplicate email in master data', { uid: user.uid, email });
+    return;
+  }
+
+  if (studentResult.doc && teacherResult.doc) {
+    functions.logger.error('Skip auto-link: ambiguous role (student + teacher)', {
       uid: user.uid,
-      email: user.email,
+      email,
+      studentPath: studentResult.doc.ref.path,
+      teacherPath: teacherResult.doc.ref.path,
     });
     return;
   }
 
-  const currentUidAuth = target.data.uidAuth as string | undefined;
-  if (currentUidAuth && currentUidAuth !== user.uid) {
-    functions.logger.warn('Skip overwrite existing uidAuth', {
+  if (!studentResult.doc && !teacherResult.doc) {
+    functions.logger.info('No student/teacher profile found for auth email', { uid: user.uid, email });
+    return;
+  }
+
+  if (studentResult.doc) {
+    const data = studentResult.doc.data();
+    if (data.authUid && data.authUid !== user.uid) {
+      functions.logger.warn('Skip overwrite existing student.authUid', {
+        uid: user.uid,
+        email,
+        studentId: studentResult.doc.id,
+        currentAuthUid: data.authUid,
+      });
+      return;
+    }
+
+    await studentResult.doc.ref.set(
+      {
+        authUid: user.uid,
+        linkedUserId: user.uid,
+        isClaimed: true,
+        emailLower: email,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        linkedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    const existingClaims = (await admin.auth().getUser(user.uid)).customClaims || {};
+    await admin.auth().setCustomUserClaims(user.uid, {
+      ...existingClaims,
+      role: 'siswa',
+      studentId: studentResult.doc.id,
+      linkedProfilePath: studentResult.doc.ref.path,
+    });
+
+    functions.logger.info('Student account linked automatically', {
       uid: user.uid,
-      email: user.email,
-      existingUidAuth: currentUidAuth,
-      targetPath: target.ref.path,
+      email,
+      studentId: studentResult.doc.id,
     });
     return;
   }
 
-  await target.ref.set(
+  const teacherDoc = teacherResult.doc!;
+  const teacherData = teacherDoc.data();
+
+  if (teacherData.authUid && teacherData.authUid !== user.uid) {
+    functions.logger.warn('Skip overwrite existing teacher.authUid', {
+      uid: user.uid,
+      email,
+      teacherId: teacherDoc.id,
+      currentAuthUid: teacherData.authUid,
+    });
+    return;
+  }
+
+  await teacherDoc.ref.set(
     {
-      uidAuth: user.uid,
-      emailLower: user.email.toLowerCase(),
-      accountLinked: true,
+      authUid: user.uid,
+      linkedUserId: user.uid,
+      emailLower: email,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       linkedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
@@ -131,15 +129,14 @@ export const autoFillUidAuth = functions.auth.user().onCreate(async (user) => {
   const existingClaims = (await admin.auth().getUser(user.uid)).customClaims || {};
   await admin.auth().setCustomUserClaims(user.uid, {
     ...existingClaims,
-    role: target.role,
-    schoolId: target.data.schoolId || null,
-    linkedProfilePath: target.ref.path,
+    role: 'guru',
+    teacherId: teacherDoc.id,
+    linkedProfilePath: teacherDoc.ref.path,
   });
 
-  functions.logger.info('uidAuth auto-filled successfully', {
+  functions.logger.info('Teacher account linked automatically', {
     uid: user.uid,
-    email: user.email,
-    role: target.role,
-    targetPath: target.ref.path,
+    email,
+    teacherId: teacherDoc.id,
   });
 });
