@@ -37,6 +37,19 @@ Wajib tambahkan variabel berikut di Dashboard Vercel (Settings > Environment Var
 ### 3. Authorized Domains
 Tambahkan URL deployment Anda (misal: `imam-school.vercel.app`) ke dalam daftar **Authorized Domains** di Firebase Console (Authentication > Settings > Authorized Domains).
 
+## ⚡ Menjalankan Aplikasi Otomatis (One Command)
+
+Untuk menjalankan aplikasi lokal secara otomatis (install dependency + start server), gunakan perintah berikut dari root project:
+
+```bash
+npm install && npm run dev
+```
+
+Setelah command selesai, aplikasi otomatis aktif di:
+- `http://localhost:3000`
+
+> `npm run dev` pada project ini menjalankan `node server.ts` (Vite middleware di mode development), jadi tidak perlu menjalankan proses frontend/backend terpisah.
+
 ## 💻 Pengembangan Lokal
 
 1. **Clone & Install**:
