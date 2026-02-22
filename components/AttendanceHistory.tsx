@@ -90,10 +90,20 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ onBack, userRole 
   }, [records, searchQuery]);
 
 
+  const normalizeDisplayTime = (raw: string): string => {
+      const value = String(raw).trim();
+      if (value.endsWith(' H')) return value;
+
+      const match = value.match(/^(\d{2}:\d{2})(?::\d{2})?\s*ha[iy]d$/i);
+      if (match) return `${match[1]} H`;
+      if (/^ha[iy]d$/i.test(value)) return 'H';
+
+      return value.substring(0, 5);
+  };
+
   const formatTime = (value: string | null) => {
       if (!value) return '-';
-      if (value.endsWith(' H')) return value;
-      return value.substring(0, 5);
+      return normalizeDisplayTime(value);
   };
 
   return (

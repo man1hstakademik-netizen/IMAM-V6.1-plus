@@ -122,11 +122,20 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }, [allStudents, studentSearch]);
 
     // Formatters
+    const normalizeDisplayTime = (raw: string): string => {
+        const value = String(raw).trim();
+        if (value.endsWith(' H')) return value;
+
+        const match = value.match(/^(\d{2}:\d{2})(?::\d{2})?\s*ha[iy]d$/i);
+        if (match) return `${match[1]} H`;
+        if (/^ha[iy]d$/i.test(value)) return 'H';
+
+        return value.substring(0, 5);
+    };
+
     const formatTime = (t: any) => {
         if (!t) return '-';
-        const value = String(t);
-        if (value.endsWith(' H')) return value;
-        return value.substring(0, 5);
+        return normalizeDisplayTime(String(t));
     };
     const toTitleCase = (str: string) => str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 

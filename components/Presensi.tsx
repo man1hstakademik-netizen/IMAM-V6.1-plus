@@ -78,11 +78,20 @@ const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => voi
     } as any);
   }, [allStudents, attendanceSnapshot, searchTerm, date]);
 
+  const normalizeDisplayTime = (raw: string): string => {
+      const value = String(raw).trim();
+      if (value.endsWith(' H')) return value;
+
+      const match = value.match(/^(\d{2}:\d{2})(?::\d{2})?\s*ha[iy]d$/i);
+      if (match) return `${match[1]} H`;
+      if (/^ha[iy]d$/i.test(value)) return 'H';
+
+      return value.substring(0, 5);
+  };
+
   const formatTime = (time: string | null) => {
       if (!time) return '-';
-      if (time.endsWith(' H')) return time;
-      if (time.startsWith('Haid')) return 'Haid';
-      return time.substring(0, 5);
+      return normalizeDisplayTime(time);
   };
 
   return (
