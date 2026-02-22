@@ -43,7 +43,7 @@ const History: React.FC<HistoryProps> = ({ onBack, userRole }) => {
     const fetchData = async () => {
         setLoading(true);
         const uid = auth?.currentUser?.uid || (isMockMode ? 'user-1' : '');
-        const isAdminOrStaff = userRole === UserRole.ADMIN || userRole === UserRole.STAF || userRole === UserRole.KEPALA_MADRASAH || userRole === UserRole.GURU;
+        const isAdminOrStaff = userRole === UserRole.ADMIN || userRole === UserRole.STAF_TU || userRole === UserRole.KEPALA_MADRASAH || userRole === UserRole.GURU;
 
         const allItems: HistoryItem[] = [];
 

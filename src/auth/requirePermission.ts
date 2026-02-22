@@ -1,9 +1,9 @@
-import { hasPermission, Permission, type Role } from './rbac.js';
+import { hasPermission, Permission, type RBACRole } from './rbac.js';
 
 export interface AuthenticatedRequest {
   user?: {
     id: string;
-    role: Role;
+    role: RBACRole;
     permissions: readonly Permission[];
   };
 }

@@ -1,20 +1,7 @@
-export enum Role {
-  ADMIN = 'ADMIN',
-  DEVELOPER = 'DEVELOPER',
-  GURU = 'GURU',
-  SISWA = 'SISWA',
-  KEPALA_MADRASAH = 'KEPALA_MADRASAH',
-  WALI_KELAS = 'WALI_KELAS',
-  STAF_TU = 'STAF_TU',
-  WAKA_KURIKULUM = 'WAKA_KURIKULUM',
-  WAKA_KESISWAAN = 'WAKA_KESISWAAN',
-  WAKA_SARPRAS = 'WAKA_SARPRAS',
-  BK = 'BK',
-  OPERATOR = 'OPERATOR',
-  ORANG_TUA = 'ORANG_TUA',
-  PETUGAS_PIKET = 'PETUGAS_PIKET',
-  TAMU = 'TAMU',
-}
+import { Role, type Role as RoleValue } from './roles';
+
+export { Role };
+export type RBACRole = RoleValue;
 
 export enum Permission {
   VIEW_DASHBOARD = 'VIEW_DASHBOARD',
@@ -27,11 +14,12 @@ export enum Permission {
   MANAGE_SYSTEM = 'MANAGE_SYSTEM',
 }
 
-export const RolePermissions: Readonly<Record<Role, readonly Permission[]>> = {
+export const RolePermissions: Readonly<Record<RoleValue, readonly Permission[]>> = {
   [Role.ADMIN]: Object.values(Permission),
   [Role.DEVELOPER]: Object.values(Permission),
   [Role.GURU]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_ATTENDANCE, Permission.MANAGE_ACADEMIC, Permission.ACCESS_AI],
   [Role.SISWA]: [Permission.VIEW_DASHBOARD],
+  [Role.KETUA_KELAS]: [Permission.VIEW_DASHBOARD],
   [Role.KEPALA_MADRASAH]: [Permission.VIEW_DASHBOARD, Permission.VIEW_REPORTS, Permission.MANAGE_SYSTEM],
   [Role.WALI_KELAS]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_ATTENDANCE, Permission.MANAGE_ACADEMIC],
   [Role.STAF_TU]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_USERS],
@@ -45,8 +33,8 @@ export const RolePermissions: Readonly<Record<Role, readonly Permission[]>> = {
   [Role.TAMU]: [],
 } as const;
 
-export const hasPermission = (role: Role, permission: Permission): boolean => {
+export const hasPermission = (role: RoleValue, permission: Permission): boolean => {
   return RolePermissions[role]?.includes(permission) ?? false;
 };
 
-export const getPermissions = (role: Role): readonly Permission[] => RolePermissions[role] ?? [];
+export const getPermissions = (role: RoleValue): readonly Permission[] => RolePermissions[role] ?? [];

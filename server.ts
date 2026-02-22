@@ -5,27 +5,8 @@ import { extname, join, normalize } from 'node:path';
 import { URL } from 'node:url';
 import { createServer as createViteServer } from 'vite';
 import { verifyIdToken } from './src/lib/sso.ts';
+import { Role, normalizeRole, type Role as RoleValue } from './src/auth/roles.ts';
 
-
-const Role = {
-  ADMIN: 'ADMIN',
-  DEVELOPER: 'DEVELOPER',
-  GURU: 'GURU',
-  SISWA: 'SISWA',
-  KEPALA_MADRASAH: 'KEPALA_MADRASAH',
-  WALI_KELAS: 'WALI_KELAS',
-  STAF_TU: 'STAF_TU',
-  WAKA_KURIKULUM: 'WAKA_KURIKULUM',
-  WAKA_KESISWAAN: 'WAKA_KESISWAAN',
-  WAKA_SARPRAS: 'WAKA_SARPRAS',
-  BK: 'BK',
-  OPERATOR: 'OPERATOR',
-  ORANG_TUA: 'ORANG_TUA',
-  PETUGAS_PIKET: 'PETUGAS_PIKET',
-  TAMU: 'TAMU',
-} as const;
-
-type Role = (typeof Role)[keyof typeof Role];
 
 const Permission = {
   VIEW_DASHBOARD: 'VIEW_DASHBOARD',
@@ -40,7 +21,7 @@ const Permission = {
 
 type Permission = (typeof Permission)[keyof typeof Permission];
 
-const rolePermissions: Record<Role, readonly Permission[]> = {
+const rolePermissions: Record<RoleValue, readonly Permission[]> = {
   [Role.ADMIN]: Object.values(Permission),
   [Role.DEVELOPER]: Object.values(Permission),
   [Role.GURU]: [Permission.VIEW_DASHBOARD, Permission.MANAGE_ATTENDANCE, Permission.MANAGE_ACADEMIC, Permission.ACCESS_AI],
@@ -58,11 +39,11 @@ const rolePermissions: Record<Role, readonly Permission[]> = {
   [Role.TAMU]: [],
 } as const;
 
-const getPermissions = (role: Role): readonly Permission[] => rolePermissions[role] ?? [];
+const getPermissions = (role: RoleValue): readonly Permission[] => rolePermissions[role] ?? [];
 
 type AuthContext = {
   userId: string;
-  role: Role;
+  role: RoleValue;
   permissions: readonly Permission[];
 };
 
@@ -111,18 +92,13 @@ const getRequestMeta = (req: IncomingMessage) => ({
   userAgent: req.headers['user-agent']?.toString() ?? 'unknown',
 });
 
-const parseRole = (roleCandidate: unknown): Role => {
-  if (!roleCandidate || typeof roleCandidate !== 'string') return Role.TAMU;
-  return Object.values(Role).includes(roleCandidate as Role) ? (roleCandidate as Role) : Role.TAMU;
-};
-
 const authenticate = async (req: IncomingMessage): Promise<AuthContext | null> => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) return null;
 
   const token = authHeader.slice(7);
   const payload = await verifyIdToken(token);
-  const role = parseRole(payload.role);
+  const role = normalizeRole(payload.role, Role.TAMU);
   const userId = typeof payload.sub === 'string' ? payload.sub : typeof payload.user_id === 'string' ? payload.user_id : 'unknown';
 
   return {

@@ -222,7 +222,7 @@ const SiswaLihatRapor: React.FC = () => {
 // --- MAIN COMPONENT ---
 
 const Grades: React.FC<GradesProps> = ({ onBack, userRole }) => {
-    const isTeacher = userRole === UserRole.GURU || userRole === UserRole.ADMIN || userRole === UserRole.STAF;
+    const isTeacher = userRole === UserRole.GURU || userRole === UserRole.ADMIN || userRole === UserRole.STAF_TU;
     return (
         <Layout title="Nilai & Rapor" subtitle={isTeacher ? "Manajemen Penilaian" : "Hasil Akademik Saya"} icon={AcademicCapIcon} onBack={onBack}>
             <div className="p-4 lg:p-6 pb-24">

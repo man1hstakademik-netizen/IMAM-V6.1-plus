@@ -114,7 +114,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userRole, onLogout })
   const quickMenuItems = [
     { label: 'Jadwal', icon: CalendarIcon, view: ViewState.SCHEDULE, color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Tugas', icon: BookOpenIcon, view: ViewState.ASSIGNMENTS, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'Presensi', icon: QrCodeIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH] },
+    { label: 'Presensi', icon: QrCodeIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH] },
     { label: 'Nilai', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Surat', icon: EnvelopeIcon, view: ViewState.LETTERS, color: 'text-sky-600', bg: 'bg-sky-50' },
     { label: 'Laporan', icon: ChartBarIcon, view: ViewState.REPORTS, color: 'text-slate-600', bg: 'bg-slate-100', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.KEPALA_MADRASAH] }

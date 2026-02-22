@@ -24,6 +24,7 @@ import Advisor from './Advisor';
 import Settings from './Settings';
 import PointsView from './PointsView';
 import { ViewState, UserRole } from '../types';
+import { normalizeRole } from '../src/auth/roles';
 import { toast } from 'sonner';
 import { Loader2, AppLogo } from './Icons';
 import { auth, db, isMockMode } from '../services/firebase';
@@ -84,7 +85,7 @@ const App: React.FC = () => {
                       
                       if (userDoc.exists) {
                           const data = userDoc.data();
-                          const role = data?.role as UserRole || UserRole.TAMU;
+                          const role = normalizeRole(data?.role, UserRole.TAMU);
                           setUserRole(role);
                           setCurrentView(prev => (prev === ViewState.LOGIN || prev === ViewState.REGISTER) ? ViewState.DASHBOARD : prev);
                       } else {
@@ -137,7 +138,7 @@ const App: React.FC = () => {
   const backToDashboard = () => handleNavigate(ViewState.DASHBOARD);
 
   // Role Group Definitions
-  const staffAbove = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH];
+  const staffAbove = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH];
   const adminDevOnly = [UserRole.ADMIN, UserRole.DEVELOPER];
   const devOnly = [UserRole.DEVELOPER];
 

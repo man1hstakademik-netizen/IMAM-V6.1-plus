@@ -1,6 +1,7 @@
 
 import { auth } from './firebase'; // Client SDK
 import { UserRole } from '../types';
+import { normalizeRole } from '../auth/roles';
 
 interface SSOResponse {
     uid: string;
@@ -35,11 +36,7 @@ export const loginWithSSO = async (idToken: string): Promise<{ success: boolean;
             await auth.signInWithCustomToken(data.token);
         }
 
-        // 3. Map string role to Enum
-        let mappedRole = UserRole.GTK;
-        if (data.role === 'ADMIN') mappedRole = UserRole.ADMIN;
-        if (data.role === 'SISWA') mappedRole = UserRole.SISWA;
-        if (data.role === 'ORANG_TUA') mappedRole = UserRole.ORANG_TUA;
+        const mappedRole = normalizeRole(data.role, UserRole.GURU);
 
         return { success: true, role: mappedRole };
 
@@ -49,7 +46,7 @@ export const loginWithSSO = async (idToken: string): Promise<{ success: boolean;
         // Fallback for purely client-side demos where /api/ route might not exist
         if (idToken === "SSO-Imam-token") {
              console.warn("Falling back to client-side mock due to API error.");
-             return { success: true, role: UserRole.GTK };
+             return { success: true, role: UserRole.GURU };
         }
 
         return { success: false, error: error.message };
