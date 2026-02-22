@@ -111,16 +111,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userRole, onLogout })
 
   const prestigePhoto = "https://lh3.googleusercontent.com/d/1nUuvSSEI4pj7YZd_Hy4iSO62LM-_KuoE";
 
-  const hasRoleAccess = (roles?: UserRole[]) => !roles || roles.includes(userRole);
-
   const quickMenuItems = [
     { label: 'Jadwal', icon: CalendarIcon, view: ViewState.SCHEDULE, color: 'text-orange-600', bg: 'bg-orange-50' },
     { label: 'Tugas', icon: BookOpenIcon, view: ViewState.ASSIGNMENTS, color: 'text-violet-600', bg: 'bg-violet-50' },
     { label: 'Presensi', icon: QrCodeIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50', requiredPermission: Permission.SCAN_QR },
     { label: 'Nilai', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Surat', icon: EnvelopeIcon, view: ViewState.LETTERS, color: 'text-sky-600', bg: 'bg-sky-50' },
-    { label: 'Laporan', icon: ChartBarIcon, view: ViewState.REPORTS, color: 'text-slate-600', bg: 'bg-slate-100', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.KEPALA_MADRASAH] }
-  ].filter(item => hasRoleAccess(item.roles) && (!item.requiredPermission || canAccessPermission(userRole, item.requiredPermission)) && canAccessView(userRole, item.view));
+    { label: 'Laporan', icon: ChartBarIcon, view: ViewState.REPORTS, color: 'text-slate-600', bg: 'bg-slate-100', requiredPermission: Permission.VIEW_REPORTS }
+  ].filter(item => (!item.requiredPermission || canAccessPermission(userRole, item.requiredPermission)) && canAccessView(userRole, item.view));
 
   return (
     <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#020617] overflow-hidden transition-colors duration-300">

@@ -29,7 +29,6 @@ interface SidebarItem {
     icon: React.ElementType;
     view?: ViewState;
     url?: string;
-    roles?: UserRole[];
     requiredPermission?: Permission; 
 }
 
@@ -46,31 +45,31 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, userRole = U
     { label: 'Tugas & PR', icon: ClipboardDocumentListIcon, view: ViewState.ASSIGNMENTS },
     { label: 'Rapor digital', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS },
     { label: 'Scan QR presensi', icon: QrCodeIcon, view: ViewState.SCANNER, requiredPermission: Permission.SCAN_QR },
-    { label: 'Input presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
+    { label: 'Input presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, requiredPermission: Permission.MANAGE_ATTENDANCE },
     { label: 'Riwayat absen', icon: CalendarDaysIcon, view: ViewState.ATTENDANCE_HISTORY },
     { label: 'Layanan kemenag', icon: BuildingLibraryIcon, view: ViewState.KEMENAG_HUB },
     { label: 'Live chat bantuan', icon: HeadsetIcon, view: ViewState.ADVISOR },
-    { label: 'Alat bantu guru AI', icon: SparklesIcon, view: ViewState.CONTENT_GENERATION, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.WALI_KELAS] },
+    { label: 'Alat bantu guru AI', icon: SparklesIcon, view: ViewState.CONTENT_GENERATION, requiredPermission: Permission.USE_AI_ASSISTANT },
     { label: 'Layanan surat', icon: EnvelopeIcon, view: ViewState.LETTERS },
-    { label: 'Laporan cetak', icon: ChartBarIcon, view: ViewState.REPORTS, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.KEPALA_MADRASAH] },
+    { label: 'Laporan cetak', icon: ChartBarIcon, view: ViewState.REPORTS, requiredPermission: Permission.VIEW_REPORTS },
     { label: 'Profil saya', icon: UserIcon, view: ViewState.PROFILE },
     { 
         label: 'Manajemen klaim', 
         icon: ShieldCheckIcon, 
         view: ViewState.CLAIM_MANAGEMENT, 
-        roles: [UserRole.ADMIN, UserRole.DEVELOPER] 
+        requiredPermission: Permission.MANAGE_USERS 
     },
     { 
         label: 'Manajemen user', 
         icon: UserPlusIcon, 
         view: ViewState.CREATE_ACCOUNT, 
-        roles: [UserRole.ADMIN, UserRole.DEVELOPER] 
+        requiredPermission: Permission.MANAGE_USERS 
     },
     { 
         label: 'Developer console', 
         icon: CommandLineIcon, 
         view: ViewState.DEVELOPER, 
-        roles: [UserRole.DEVELOPER] 
+        requiredPermission: Permission.ACCESS_DEVELOPER_CONSOLE 
     },
     { label: 'Pengaturan sistem', icon: CogIcon, view: ViewState.SETTINGS },
     { label: 'Tentang aplikasi', icon: InfoIcon, view: ViewState.ABOUT },
@@ -78,9 +77,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, userRole = U
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
-      const roleAllowed = !item.roles || item.roles.includes(userRole as UserRole);
       const permissionAllowed = !item.requiredPermission || canAccessPermission(userRole, item.requiredPermission);
-      return roleAllowed && permissionAllowed && canAccessView(userRole, item.view);
+      return permissionAllowed && canAccessView(userRole, item.view);
     });
   }, [userRole]);
 
