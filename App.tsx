@@ -152,9 +152,6 @@ const App: React.FC = () => {
   }
 
   // Role Group Definitions
-  const staffAbove = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH];
-  const adminDevOnly = [UserRole.ADMIN, UserRole.DEVELOPER];
-  const devOnly = [UserRole.DEVELOPER];
 
   const renderCurrentView = () => {
     switch (currentView) {
@@ -175,13 +172,13 @@ const App: React.FC = () => {
       case ViewState.ADVISOR: return <Advisor onBack={backToDashboard} />;
       case ViewState.MADRASAH_INFO: return <MadrasahInfo onBack={backToDashboard} />;
       case ViewState.KEMENAG_HUB: return <KemenagHub onBack={backToDashboard} />;
-      case ViewState.CLASSES: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><ClassList onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.CLASSES: return <ProtectedRoute requiredPermission={Permission.VIEW_CLASSES} userRole={userRole} onBack={backToDashboard}><ClassList onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
       case ViewState.SCANNER: return <ProtectedRoute requiredPermission={Permission.SCAN_QR} userRole={userRole} onBack={backToDashboard}><QRScanner onBack={backToDashboard} /></ProtectedRoute>;
       case ViewState.ATTENDANCE_HISTORY: return <AttendanceHistory onBack={backToDashboard} onNavigate={handleNavigate} userRole={userRole} />;
       case ViewState.PRESENSI: return <ProtectedRoute requiredPermission={Permission.MANAGE_ATTENDANCE} userRole={userRole} onBack={backToDashboard}><Presensi onBack={backToDashboard} onNavigate={handleNavigate} /></ProtectedRoute>;
       case ViewState.CONTENT_GENERATION: return <ProtectedRoute requiredPermission={Permission.USE_AI_ASSISTANT} userRole={userRole} onBack={backToDashboard}><ContentGeneration onBack={backToDashboard} /></ProtectedRoute>;
       case ViewState.REPORTS: return <ProtectedRoute requiredPermission={Permission.VIEW_REPORTS} userRole={userRole} onBack={backToDashboard}><Reports onBack={backToDashboard} /></ProtectedRoute>;
-      case ViewState.JOURNAL: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><TeachingJournal onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
+      case ViewState.JOURNAL: return <ProtectedRoute requiredPermission={Permission.VIEW_JOURNAL} userRole={userRole} onBack={backToDashboard}><TeachingJournal onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
       case ViewState.ASSIGNMENTS: return <Assignments onBack={backToDashboard} userRole={userRole} />;
       case ViewState.GRADES:
       case ViewState.REPORT_CARDS: return <Grades onBack={backToDashboard} userRole={userRole} />;

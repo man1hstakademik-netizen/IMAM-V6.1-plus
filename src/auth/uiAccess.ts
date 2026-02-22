@@ -8,7 +8,8 @@ const viewPermissions: Partial<Record<ViewState, Permission>> = {
   [ViewState.CONTENT_GENERATION]: Permission.USE_AI_ASSISTANT,
   [ViewState.STUDENTS]: Permission.VIEW_SISWA,
   [ViewState.TEACHERS]: Permission.VIEW_USERS,
-  [ViewState.CLASSES]: Permission.MANAGE_ACADEMIC,
+  [ViewState.CLASSES]: Permission.VIEW_CLASSES,
+  [ViewState.JOURNAL]: Permission.VIEW_JOURNAL,
   [ViewState.CREATE_ACCOUNT]: Permission.MANAGE_USERS,
   [ViewState.DEVELOPER]: Permission.ACCESS_DEVELOPER_CONSOLE,
 };

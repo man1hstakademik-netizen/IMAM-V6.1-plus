@@ -33,6 +33,26 @@ describe('Permission Enforcement', () => {
   });
 
 
+
+  it('Classes and Journal route permissions follow migration expectations', () => {
+    assert.equal(hasPermission(Role.ADMIN, Permission.VIEW_CLASSES), true);
+    assert.equal(hasPermission(Role.DEVELOPER, Permission.VIEW_CLASSES), true);
+    assert.equal(hasPermission(Role.GURU, Permission.VIEW_CLASSES), true);
+    assert.equal(hasPermission(Role.STAF_TU, Permission.VIEW_CLASSES), true);
+    assert.equal(hasPermission(Role.WALI_KELAS, Permission.VIEW_CLASSES), true);
+    assert.equal(hasPermission(Role.KEPALA_MADRASAH, Permission.VIEW_CLASSES), true);
+
+    assert.equal(hasPermission(Role.ADMIN, Permission.VIEW_JOURNAL), true);
+    assert.equal(hasPermission(Role.DEVELOPER, Permission.VIEW_JOURNAL), true);
+    assert.equal(hasPermission(Role.GURU, Permission.VIEW_JOURNAL), true);
+    assert.equal(hasPermission(Role.STAF_TU, Permission.VIEW_JOURNAL), true);
+    assert.equal(hasPermission(Role.WALI_KELAS, Permission.VIEW_JOURNAL), true);
+    assert.equal(hasPermission(Role.KEPALA_MADRASAH, Permission.VIEW_JOURNAL), true);
+
+    assert.equal(hasPermission(Role.SISWA, Permission.VIEW_CLASSES), false);
+    assert.equal(hasPermission(Role.SISWA, Permission.VIEW_JOURNAL), false);
+  });
+
   it('Scanner permission is restricted to intended roles', () => {
     assert.equal(hasPermission(Role.ADMIN, Permission.SCAN_QR), true);
     assert.equal(hasPermission(Role.DEVELOPER, Permission.SCAN_QR), true);
