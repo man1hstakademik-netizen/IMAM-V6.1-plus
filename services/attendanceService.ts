@@ -34,11 +34,12 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
     const today = format(new Date(), "yyyy-MM-dd");
     const nowObj = new Date();
     const now = format(nowObj, "HH:mm:ss");
+    const nowShort = format(nowObj, "HH:mm");
     const currentHour = nowObj.getHours();
     const LATE_THRESHOLD = "07:30:00"; 
 
     // PERUBAHAN: Jika mode haid, rekam status beserta waktunya agar bisa ditampilkan
-    const recordValue = isHaid ? `Haid (${now})` : now;
+    const recordValue = isHaid ? `${nowShort} H` : now;
     
     // Map session to the appropriate database field
     const fieldMap: Record<AttendanceSession, string> = {
@@ -89,6 +90,10 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
             return { success: false, message: `ID "${code}" TIDAK TERDAFTAR` };
         }
 
+        if (isHaid && !['Duha', 'Zuhur', 'Ashar'].includes(session)) {
+            return { success: false, message: "MODE HAID KHUSUS SESI DUHA/ZUHUR/ASHAR" };
+        }
+
         if (isHaid && studentData.jenisKelamin === 'Laki-laki') {
             return { success: false, message: "MODE HAID HANYA UNTUK PUTRI", student: studentData };
         }
@@ -117,10 +122,6 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
 
         if (isHaid) {
             updatePayload.status = 'Haid';
-            // Otomatis tandai sesi ibadah lainnya sebagai Haid jika belum ada data
-            if (!currentData?.duha) updatePayload.duha = recordValue;
-            if (!currentData?.zuhur) updatePayload.zuhur = recordValue;
-            if (!currentData?.ashar) updatePayload.ashar = recordValue;
         } else if (!currentData?.status || currentData.status === 'Alpha' || currentData.status === 'Hadir' || currentData.status === 'Terlambat') {
             if (session === 'Masuk' || session === 'Masuk/Duha') {
                 updatePayload.status = isLate ? 'Terlambat' : 'Hadir';

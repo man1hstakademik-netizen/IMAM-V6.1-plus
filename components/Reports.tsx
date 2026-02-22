@@ -122,7 +122,12 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }, [allStudents, studentSearch]);
 
     // Formatters
-    const formatTime = (t: any) => t ? String(t).substring(0, 5) : '-';
+    const formatTime = (t: any) => {
+        if (!t) return '-';
+        const value = String(t);
+        if (value.endsWith(' H')) return value;
+        return value.substring(0, 5);
+    };
     const toTitleCase = (str: string) => str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
     // --- PDF ENGINE ---
