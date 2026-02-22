@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { ViewState, UserRole } from './types';
+import { normalizeRole } from './src/auth/roles';
 import { auth, db, isMockMode } from './services/firebase';
 import { Loader2, AppLogo } from './components/Icons';
 
@@ -87,7 +88,7 @@ const App: React.FC = () => {
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists) {
               const data = userDoc.data();
-              setUserRole(data?.role as UserRole || UserRole.GURU);
+              setUserRole(normalizeRole(data?.role, UserRole.GURU));
               setCurrentView(v => v === ViewState.LOGIN ? ViewState.DASHBOARD : v);
             }
           } catch (e) {
@@ -150,7 +151,7 @@ const App: React.FC = () => {
   }
 
   // Role Group Definitions
-  const staffAbove = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH];
+  const staffAbove = [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH];
   const adminDevOnly = [UserRole.ADMIN, UserRole.DEVELOPER];
   const devOnly = [UserRole.DEVELOPER];
 

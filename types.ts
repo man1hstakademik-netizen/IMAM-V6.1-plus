@@ -46,18 +46,10 @@ export enum ViewState {
   CLAIM_MANAGEMENT = 'CLAIM_MANAGEMENT',
 }
 
-export enum UserRole {
-  ADMIN = 'admin',
-  DEVELOPER = 'developer',
-  KEPALA_MADRASAH = 'kepala_madrasah',
-  GURU = 'Guru',
-  WALI_KELAS = 'Wali Kelas',
-  STAF = 'Staf',
-  KETUA_KELAS = 'Ketua Kelas',
-  SISWA = 'siswa',
-  ORANG_TUA = 'orangtua',
-  TAMU = 'Tamu'
-}
+import { Role, type Role as UnifiedRole } from './src/auth/roles';
+
+export const UserRole = Role;
+export type UserRole = UnifiedRole;
 
 export interface ClaimRequest {
   id: string;
