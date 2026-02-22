@@ -89,6 +89,13 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ onBack, userRole 
       return records.filter(r => String(r.studentName).toLowerCase().includes(q));
   }, [records, searchQuery]);
 
+
+  const formatTime = (value: string | null) => {
+      if (!value) return '-';
+      if (value.endsWith(' H')) return value;
+      return value.substring(0, 5);
+  };
+
   return (
     <Layout 
         title="Riwayat Absensi" 
@@ -131,27 +138,33 @@ const AttendanceHistory: React.FC<AttendanceHistoryProps> = ({ onBack, userRole 
                             <th className="text-center w-10">No</th>
                             <th>Nama Siswa</th>
                             <th className="text-center">Masuk</th>
+                            <th className="text-center">Duha</th>
+                            <th className="text-center">Zuhur</th>
+                            <th className="text-center">Ashar</th>
                             <th className="text-center">Pulang</th>
                             <th className="text-center">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={5} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500 opacity-20" /></td></tr>
+                            <tr><td colSpan={8} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500 opacity-20" /></td></tr>
                         ) : filteredRecords.length > 0 ? (
                             filteredRecords.map((r, i) => (
                                 <tr key={r.id}>
                                     <td className="text-center font-mono text-slate-400">{i + 1}</td>
                                     <td className="font-bold text-slate-800 dark:text-slate-200 uppercase">{r.studentName}</td>
-                                    <td className="text-center font-mono">{r.checkIn ? r.checkIn.substring(0,5) : '-'}</td>
-                                    <td className="text-center font-mono">{r.checkOut ? r.checkOut.substring(0,5) : '-'}</td>
+                                    <td className="text-center font-mono">{formatTime(r.checkIn)}</td>
+                                    <td className="text-center font-mono">{formatTime(r.duha)}</td>
+                                    <td className="text-center font-mono">{formatTime(r.zuhur)}</td>
+                                    <td className="text-center font-mono">{formatTime(r.ashar)}</td>
+                                    <td className="text-center font-mono">{formatTime(r.checkOut)}</td>
                                     <td className="text-center">
                                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${r.status === 'Alpha' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>{r.status}</span>
                                     </td>
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan={5} className="py-20 text-center text-slate-400 font-medium">Log tidak ditemukan (Limit 50)</td></tr>
+                            <tr><td colSpan={8} className="py-20 text-center text-slate-400 font-medium">Log tidak ditemukan (Limit 50)</td></tr>
                         )}
                     </tbody>
                 </table>

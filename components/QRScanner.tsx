@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import { recordAttendanceByScan, AttendanceSession } from '../services/attendanceService';
+import { recordAttendanceByScan, AttendanceSession, preloadStudentsForOffline, syncPendingAttendance, getPendingAttendanceCount } from '../services/attendanceService';
 import Layout from './Layout';
 import { 
   CheckCircleIcon, XCircleIcon, CameraIcon, 
@@ -50,6 +50,9 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [hasTorch, setHasTorch] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [pendingSync, setPendingSync] = useState(0);
+  const isPrayerSession = ['Duha', 'Zuhur', 'Ashar'].includes(session);
   
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const lastScannedRef = useRef<{id: string, time: number}>({ id: '', time: 0 });
@@ -58,8 +61,58 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
   const sessionRef = useRef(session);
   const haidRef = useRef(isHaidMode);
   
-  useEffect(() => { sessionRef.current = session; }, [session]);
+  useEffect(() => {
+    sessionRef.current = session;
+    if (!['Duha', 'Zuhur', 'Ashar'].includes(session)) {
+      setIsHaidMode(false);
+    }
+  }, [session]);
   useEffect(() => { haidRef.current = isHaidMode; }, [isHaidMode]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const bootstrapOffline = async () => {
+      const cached = await preloadStudentsForOffline();
+      if (!mounted) return;
+      setPendingSync(await getPendingAttendanceCount());
+      if (cached > 0) {
+        toast.success(`Cache siswa siap offline (${cached} data)`);
+      }
+
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        const result = await syncPendingAttendance();
+        if (!mounted) return;
+        setPendingSync(await getPendingAttendanceCount());
+        if (result.synced > 0) {
+          toast.success(`Sinkronisasi berhasil: ${result.synced} data`);
+        }
+      }
+    };
+
+    const handleOnline = async () => {
+      setIsOffline(false);
+      const result = await syncPendingAttendance();
+      setPendingSync(await getPendingAttendanceCount());
+      if (result.synced > 0) toast.success(`Sinkronisasi berhasil: ${result.synced} data`);
+    };
+
+    const handleOffline = async () => {
+      setIsOffline(true);
+      setPendingSync(await getPendingAttendanceCount());
+      toast.warning('Mode Offline Aktif - data akan diantrikan');
+    };
+
+    bootstrapOffline();
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const playFeedback = (type: 'success' | 'error') => {
     if (navigator.vibrate) {
@@ -83,6 +136,15 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
           determinedStatus = haidRef.current ? 'haid' : 'success';
       } else if (result.message.includes('SUDAH TERREKAM')) {
           determinedStatus = 'warning';
+      }
+
+      if (result.message.includes('MODE HAID HANYA UNTUK PUTRI')) {
+        setIsHaidMode(false);
+        toast.error('Mode Haid dimatikan untuk siswa laki-laki.');
+      }
+
+      if (result.offlineQueued) {
+        setPendingSync(await getPendingAttendanceCount());
       }
 
       const newItem: NotificationItem = {
@@ -216,6 +278,33 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
                               {s}
                           </button>
                       ))}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {isPrayerSession && (
+                      <button
+                        onClick={() => setIsHaidMode(prev => !prev)}
+                        className={`self-start px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${isHaidMode ? 'bg-rose-600 text-white border-rose-400 shadow-lg animate-pulse' : 'bg-white/10 text-white border-white/20'}`}
+                      >
+                        <HeartIcon className="w-3.5 h-3.5 inline-block mr-1.5" />
+                        {isHaidMode ? 'Mode Haid Aktif' : 'Mode Haid'}
+                      </button>
+                    )}
+                    <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${isOffline ? 'bg-amber-500/20 text-amber-200 border-amber-300/30' : 'bg-emerald-500/20 text-emerald-200 border-emerald-300/30'}`}>
+                      {isOffline ? 'Offline' : 'Online'}
+                    </span>
+                    <span className="px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/20 text-white/80 bg-white/10">
+                      Queue: {pendingSync}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const r = await syncPendingAttendance();
+                        setPendingSync(await getPendingAttendanceCount());
+                        if (r.synced > 0) toast.success(`Sinkronisasi berhasil: ${r.synced} data`);
+                      }}
+                      className="px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/20 text-white/80 bg-white/10"
+                    >
+                      <ArrowPathIcon className="w-3 h-3 inline-block mr-1" /> Sync Now
+                    </button>
                   </div>
               </div>
           </div>

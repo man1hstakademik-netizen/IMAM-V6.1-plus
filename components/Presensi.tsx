@@ -80,6 +80,7 @@ const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => voi
 
   const formatTime = (time: string | null) => {
       if (!time) return '-';
+      if (time.endsWith(' H')) return time;
       if (time.startsWith('Haid')) return 'Haid';
       return time.substring(0, 5);
   };
