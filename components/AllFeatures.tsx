@@ -33,7 +33,7 @@ const AllFeatures: React.FC<AllFeaturesProps> = ({ onBack, onNavigate, userRole 
     { label: 'Log Login', icon: ShieldCheckIcon, view: ViewState.LOGIN_HISTORY, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30' },
     
     { label: 'Jadwal', icon: CalendarIcon, view: ViewState.SCHEDULE, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/30' },
-    { label: 'Jurnal', icon: BookOpenIcon, view: ViewState.JOURNAL, color: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.WALI_KELAS] },
+    { label: 'Jurnal', icon: BookOpenIcon, view: ViewState.JOURNAL, color: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-900/30', requiredPermission: Permission.VIEW_JOURNAL },
     { label: 'Tugas', icon: ClipboardDocumentListIcon, view: ViewState.ASSIGNMENTS, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/30' },
     { label: 'Input Nilai', icon: AcademicCapIcon, view: ViewState.GRADES, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'Tahun Ajaran', icon: CalendarDaysIcon, view: ViewState.ACADEMIC_YEAR, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER] },
@@ -47,7 +47,7 @@ const AllFeatures: React.FC<AllFeaturesProps> = ({ onBack, onNavigate, userRole 
     { label: 'Poin', icon: ShieldCheckIcon, view: ViewState.POINTS, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30' },
     { label: 'Siswa', icon: UsersIcon, view: ViewState.STUDENTS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'Guru', icon: BriefcaseIcon, view: ViewState.TEACHERS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
-    { label: 'Kelas', icon: BookOpenIcon, view: ViewState.CLASSES, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
+    { label: 'Kelas', icon: BookOpenIcon, view: ViewState.CLASSES, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', requiredPermission: Permission.VIEW_CLASSES },
     { label: 'ID Card', icon: IdentificationIcon, view: ViewState.ID_CARD, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/30' },
 
     { label: 'Chat AI', icon: HeadsetIcon, view: ViewState.ADVISOR, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/30' },
