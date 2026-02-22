@@ -7,26 +7,33 @@ const db = admin.firestore();
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
-const findUniqueByEmail = async (collection: 'students' | 'teachers', email: string) => {
-  const direct = await db.collection(collection).where('email', '==', email).limit(2).get();
+type LookupResult = { doc: FirebaseFirestore.QueryDocumentSnapshot | null; duplicate: boolean };
 
-  if (direct.size > 1) {
-    functions.logger.error('Duplicate email found', { collection, email, matches: direct.size });
+const queryUnique = async (collection: 'students' | 'teachers', field: string, value: string): Promise<LookupResult> => {
+  const snap = await db.collection(collection).where(field, '==', value).limit(2).get();
+  if (snap.size > 1) {
+    functions.logger.error('Duplicate identity field found', { collection, field, value, matches: snap.size });
     return { doc: null, duplicate: true };
   }
+  return { doc: snap.empty ? null : snap.docs[0], duplicate: false };
+};
 
-  if (!direct.empty) {
-    return { doc: direct.docs[0], duplicate: false };
-  }
+const findStudentByAuthEmail = async (email: string): Promise<LookupResult> => {
+  // Khusus Student, field email login berada di `userlogin`.
+  const byUserLogin = await queryUnique('students', 'userlogin', email);
+  if (byUserLogin.duplicate || byUserLogin.doc) return byUserLogin;
 
-  const lower = await db.collection(collection).where('emailLower', '==', email).limit(2).get();
+  const byEmailLower = await queryUnique('students', 'emailLower', email);
+  if (byEmailLower.duplicate || byEmailLower.doc) return byEmailLower;
 
-  if (lower.size > 1) {
-    functions.logger.error('Duplicate emailLower found', { collection, email, matches: lower.size });
-    return { doc: null, duplicate: true };
-  }
+  return queryUnique('students', 'email', email);
+};
 
-  return { doc: lower.empty ? null : lower.docs[0], duplicate: false };
+const findTeacherByAuthEmail = async (email: string): Promise<LookupResult> => {
+  const byEmail = await queryUnique('teachers', 'email', email);
+  if (byEmail.duplicate || byEmail.doc) return byEmail;
+
+  return queryUnique('teachers', 'emailLower', email);
 };
 
 export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
@@ -38,12 +45,12 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
   const email = normalizeEmail(user.email);
 
   const [studentResult, teacherResult] = await Promise.all([
-    findUniqueByEmail('students', email),
-    findUniqueByEmail('teachers', email),
+    findStudentByAuthEmail(email),
+    findTeacherByAuthEmail(email),
   ]);
 
   if (studentResult.duplicate || teacherResult.duplicate) {
-    functions.logger.error('Skip auto-link: duplicate email in master data', { uid: user.uid, email });
+    functions.logger.error('Skip auto-link: duplicate identity value in master data', { uid: user.uid, email });
     return;
   }
 
@@ -79,6 +86,7 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
         authUid: user.uid,
         linkedUserId: user.uid,
         isClaimed: true,
+        userlogin: email,
         emailLower: email,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         linkedAt: admin.firestore.FieldValue.serverTimestamp(),
