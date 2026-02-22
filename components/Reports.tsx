@@ -331,21 +331,35 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <table className="excel-table">
                                     <thead>
                                         <tr>
-                                            <th>Siswa</th>
-                                            <th className="text-center">Status</th>
+                                            <th className="text-center">No</th>
+                                            <th>ID Unik</th>
+                                            <th>Nama Lengkap Siswa</th>
+                                            <th>Kelas</th>
                                             <th className="text-center">Masuk</th>
+                                            <th className="text-center">Duha</th>
+                                            <th className="text-center">Zuhur</th>
+                                            <th className="text-center">Ashar</th>
+                                            <th className="text-center">Pulang</th>
+                                            <th className="text-center">Ket</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {attendanceRecords.slice(0, 10).map((r, i) => (
                                             <tr key={i}>
+                                                <td className="text-center font-mono">{i + 1}</td>
+                                                <td className="font-mono text-[10px]">{r.idUnik || '-'}</td>
                                                 <td className="font-bold">{toTitleCase(r.studentName)}</td>
-                                                <td className="text-center"><span className="px-2 py-0.5 rounded text-[8px] font-black bg-indigo-50 text-indigo-600">{r.status}</span></td>
+                                                <td className="font-medium">{r.class || '-'}</td>
                                                 <td className="text-center font-mono">{formatTime(r.checkIn)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.duha)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.zuhur)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.ashar)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.checkOut)}</td>
+                                                <td className="text-center"><span className="px-2 py-0.5 rounded text-[8px] font-black bg-indigo-50 text-indigo-600">{r.status || 'Alpha'}</span></td>
                                             </tr>
                                         ))}
                                         {attendanceRecords.length === 0 && !loading && (
-                                            <tr><td colSpan={3} className="py-12 text-center text-slate-400 text-[10px] font-bold">Data tidak ditemukan untuk kriteria ini.</td></tr>
+                                            <tr><td colSpan={10} className="py-12 text-center text-slate-400 text-[10px] font-bold">Data tidak ditemukan untuk kriteria ini.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
