@@ -6,6 +6,8 @@
 import React from 'react';
 import Layout from './Layout';
 import { ViewState, UserRole } from '../types';
+import { canAccessPermission, canAccessView } from '../src/auth/uiAccess';
+import { Permission } from '../src/auth/permissions';
 import { 
   QrCodeIcon, BookOpenIcon, EnvelopeIcon, CalendarDaysIcon, UsersIcon, 
   BriefcaseIcon, CalendarIcon, ArrowTrendingUpIcon, BuildingLibraryIcon,
@@ -33,19 +35,19 @@ const AllFeatures: React.FC<AllFeaturesProps> = ({ onBack, onNavigate, userRole 
     { label: 'Jadwal', icon: CalendarIcon, view: ViewState.SCHEDULE, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/30' },
     { label: 'Jurnal', icon: BookOpenIcon, view: ViewState.JOURNAL, color: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.WALI_KELAS] },
     { label: 'Tugas', icon: ClipboardDocumentListIcon, view: ViewState.ASSIGNMENTS, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/30' },
-    { label: 'Input Nilai', icon: AcademicCapIcon, view: ViewState.GRADES, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF] },
+    { label: 'Input Nilai', icon: AcademicCapIcon, view: ViewState.GRADES, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'Tahun Ajaran', icon: CalendarDaysIcon, view: ViewState.ACADEMIC_YEAR, color: 'text-cyan-600', bg: 'bg-cyan-50 dark:bg-cyan-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER] },
     { label: 'Naik Kelas', icon: ArrowTrendingUpIcon, view: ViewState.PROMOTION, color: 'text-fuchsia-600', bg: 'bg-fuchsia-50 dark:bg-fuchsia-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER] },
     { label: 'Rapor', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/30' },
     { label: 'Cetak Laporan', icon: ChartBarIcon, view: ViewState.REPORTS, color: 'text-slate-600', bg: 'bg-slate-100 dark:bg-slate-800', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.KEPALA_MADRASAH] },
 
-    { label: 'Scan QR', icon: CameraIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH] },
-    { label: 'Presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF] },
+    { label: 'Scan QR', icon: CameraIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30', requiredPermission: Permission.SCAN_QR },
+    { label: 'Presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'Log Absen', icon: ClockIcon, view: ViewState.ATTENDANCE_HISTORY, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/30' },
     { label: 'Poin', icon: ShieldCheckIcon, view: ViewState.POINTS, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30' },
-    { label: 'Siswa', icon: UsersIcon, view: ViewState.STUDENTS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF] },
-    { label: 'Guru', icon: BriefcaseIcon, view: ViewState.TEACHERS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF] },
-    { label: 'Kelas', icon: BookOpenIcon, view: ViewState.CLASSES, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF] },
+    { label: 'Siswa', icon: UsersIcon, view: ViewState.STUDENTS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
+    { label: 'Guru', icon: BriefcaseIcon, view: ViewState.TEACHERS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
+    { label: 'Kelas', icon: BookOpenIcon, view: ViewState.CLASSES, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'ID Card', icon: IdentificationIcon, view: ViewState.ID_CARD, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/30' },
 
     { label: 'Chat AI', icon: HeadsetIcon, view: ViewState.ADVISOR, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-900/30' },
@@ -64,7 +66,7 @@ const AllFeatures: React.FC<AllFeaturesProps> = ({ onBack, onNavigate, userRole 
     { label: 'Absensi', icon: AbsensiKemenagIcon, onClick: () => window.open('https://sso.kemenag.go.id/auth/signin?appid=42095eeec431ac23eb12d2b772c94be0', '_blank'), isFrameless: true },
     { label: 'Pintar', icon: PintarIcon, onClick: () => window.open('https://pintar.kemenag.go.id/', '_blank'), isFrameless: true },
     { label: 'ASN Digital', icon: AsnDigitalIcon, onClick: () => window.open('https://asndigital.bkn.go.id/', '_blank'), isFrameless: true }
-  ].filter(item => !item.roles || item.roles.includes(userRole));
+  ].filter(item => (!item.roles || item.roles.includes(userRole)) && (!item.requiredPermission || canAccessPermission(userRole, item.requiredPermission)) && canAccessView(userRole, item.view));
 
   return (
     <Layout title="Menu Eksplorasi" subtitle="Integrasi Fitur Madrasah" icon={Squares2x2Icon} onBack={onBack} withBottomNav={true}>

@@ -39,7 +39,7 @@ const PointsView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       note: ''
   });
 
-  const isStaff = userRole === UserRole.STAF || userRole === UserRole.ADMIN || userRole === UserRole.DEVELOPER;
+  const isStaff = userRole === UserRole.STAF_TU || userRole === UserRole.ADMIN || userRole === UserRole.DEVELOPER;
   const isGuru = userRole === UserRole.GURU || userRole === UserRole.WALI_KELAS;
   const isKamad = userRole === UserRole.KEPALA_MADRASAH;
   // Added fixed isStudent variable definition

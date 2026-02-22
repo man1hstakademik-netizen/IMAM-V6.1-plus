@@ -41,10 +41,10 @@ const Letters: React.FC<LettersProps> = ({ onBack, userRole }) => {
   const [letterNumber, setLetterNumber] = useState('');
 
   // --- ROLE DEFINITIONS (Workflow Actors) ---
-  const isApplicant = [UserRole.SISWA, UserRole.GURU, UserRole.ORANG_TUA, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KETUA_KELAS].includes(userRole);
+  const isApplicant = [UserRole.SISWA, UserRole.GURU, UserRole.ORANG_TUA, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KETUA_KELAS].includes(userRole);
   
   // TU: Tata Usaha (Staf / Admin) - Verifikasi Awal
-  const isTU = userRole === UserRole.STAF || userRole === UserRole.ADMIN || userRole === UserRole.DEVELOPER;
+  const isTU = userRole === UserRole.STAF_TU || userRole === UserRole.ADMIN || userRole === UserRole.DEVELOPER;
   
   // Validator: Waka / Admin (Sementara Admin handle role Waka jika belum ada role khusus)
   const isValidator = userRole === UserRole.ADMIN || userRole === UserRole.DEVELOPER;

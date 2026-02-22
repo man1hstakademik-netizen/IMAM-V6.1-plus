@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { LockIcon, ArrowRightIcon, Loader2, ShieldCheckIcon, AppLogo, EnvelopeIcon, ArrowPathIcon, WifiIcon } from './Icons';
 import { UserRole, ViewState } from '../types';
+import { normalizeRole } from '../src/auth/roles';
 import { auth, db, isMockMode } from '../services/firebase';
 import { toast } from 'sonner';
 
@@ -61,7 +62,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateRegister }) => {
         if (user) {
             const userDoc = await db.collection('users').doc(user.uid).get();
             if (userDoc.exists) {
-                const role = userDoc.data()?.role as UserRole || UserRole.TAMU;
+                const role = normalizeRole(userDoc.data()?.role, UserRole.TAMU);
                 onLogin(role);
                 toast.success(`Selamat datang, ${user.displayName || 'Pengguna'}`);
             } else {

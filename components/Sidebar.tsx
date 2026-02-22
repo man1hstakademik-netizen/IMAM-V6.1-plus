@@ -6,6 +6,8 @@
 
 import React, { useMemo } from 'react';
 import { ViewState, UserRole } from '../types';
+import { canAccessPermission, canAccessView } from '../src/auth/uiAccess';
+import { Permission } from '../src/auth/permissions';
 import { 
   HomeIcon, UserIcon, QrCodeIcon, RobotIcon, ChartBarIcon, AppLogo, 
   BookOpenIcon, EnvelopeIcon, CalendarDaysIcon, UsersIcon, LogOutIcon,
@@ -27,7 +29,8 @@ interface SidebarItem {
     icon: React.ElementType;
     view?: ViewState;
     url?: string;
-    roles?: UserRole[]; 
+    roles?: UserRole[];
+    requiredPermission?: Permission; 
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, userRole = UserRole.GURU, onLogout, onClose }) => {
@@ -42,8 +45,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, userRole = U
     { label: 'Jurnal mengajar', icon: BookOpenIcon, view: ViewState.JOURNAL },
     { label: 'Tugas & PR', icon: ClipboardDocumentListIcon, view: ViewState.ASSIGNMENTS },
     { label: 'Rapor digital', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS },
-    { label: 'Scan QR presensi', icon: QrCodeIcon, view: ViewState.SCANNER, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH] },
-    { label: 'Input presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF] },
+    { label: 'Scan QR presensi', icon: QrCodeIcon, view: ViewState.SCANNER, requiredPermission: Permission.SCAN_QR },
+    { label: 'Input presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'Riwayat absen', icon: CalendarDaysIcon, view: ViewState.ATTENDANCE_HISTORY },
     { label: 'Layanan kemenag', icon: BuildingLibraryIcon, view: ViewState.KEMENAG_HUB },
     { label: 'Live chat bantuan', icon: HeadsetIcon, view: ViewState.ADVISOR },
@@ -75,8 +78,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, userRole = U
 
   const filteredItems = useMemo(() => {
     return menuItems.filter(item => {
-        if (!item.roles) return true;
-        return item.roles.includes(userRole as UserRole);
+      const roleAllowed = !item.roles || item.roles.includes(userRole as UserRole);
+      const permissionAllowed = !item.requiredPermission || canAccessPermission(userRole, item.requiredPermission);
+      return roleAllowed && permissionAllowed && canAccessView(userRole, item.view);
     });
   }, [userRole]);
 

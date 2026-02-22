@@ -6,6 +6,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ViewState, UserRole } from '../types';
+import { canAccessPermission, canAccessView } from '../src/auth/uiAccess';
+import { Permission } from '../src/auth/permissions';
 import { db, auth, isMockMode } from '../services/firebase';
 import { 
   UsersGroupIcon, BriefcaseIcon, 
@@ -109,14 +111,16 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userRole, onLogout })
 
   const prestigePhoto = "https://lh3.googleusercontent.com/d/1nUuvSSEI4pj7YZd_Hy4iSO62LM-_KuoE";
 
+  const hasRoleAccess = (roles?: UserRole[]) => !roles || roles.includes(userRole);
+
   const quickMenuItems = [
-    { show: true, label: 'Jadwal', icon: CalendarIcon, view: ViewState.SCHEDULE, color: 'text-orange-600', bg: 'bg-orange-50' },
-    { show: true, label: 'Tugas', icon: BookOpenIcon, view: ViewState.ASSIGNMENTS, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { show: !isStudent, label: 'Presensi', icon: QrCodeIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50' },
-    { show: true, label: 'Nilai', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { show: true, label: 'Surat', icon: EnvelopeIcon, view: ViewState.LETTERS, color: 'text-sky-600', bg: 'bg-sky-50' },
-    { show: userRole !== UserRole.SISWA, label: 'Laporan', icon: ChartBarIcon, view: ViewState.REPORTS, color: 'text-slate-600', bg: 'bg-slate-100' }
-  ];
+    { label: 'Jadwal', icon: CalendarIcon, view: ViewState.SCHEDULE, color: 'text-orange-600', bg: 'bg-orange-50' },
+    { label: 'Tugas', icon: BookOpenIcon, view: ViewState.ASSIGNMENTS, color: 'text-violet-600', bg: 'bg-violet-50' },
+    { label: 'Presensi', icon: QrCodeIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50', requiredPermission: Permission.SCAN_QR },
+    { label: 'Nilai', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Surat', icon: EnvelopeIcon, view: ViewState.LETTERS, color: 'text-sky-600', bg: 'bg-sky-50' },
+    { label: 'Laporan', icon: ChartBarIcon, view: ViewState.REPORTS, color: 'text-slate-600', bg: 'bg-slate-100', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.KEPALA_MADRASAH] }
+  ].filter(item => hasRoleAccess(item.roles) && (!item.requiredPermission || canAccessPermission(userRole, item.requiredPermission)) && canAccessView(userRole, item.view));
 
   return (
     <div className="flex flex-col h-full bg-[#f8fafc] dark:bg-[#020617] overflow-hidden transition-colors duration-300">
@@ -176,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userRole, onLogout })
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-40">
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-6 animate-in fade-in duration-700">
-            {quickMenuItems.map((item, idx) => item.show && (
+            {quickMenuItems.map((item, idx) => (
                 <button key={idx} onClick={() => onNavigate(item.view)} className="flex flex-col items-center gap-2 group outline-none">
                     <div className={`w-14 h-14 rounded-[1.8rem] flex items-center justify-center shadow-sm border border-black/5 active:scale-90 transition-all ${item.bg} dark:bg-slate-800`}>
                         <item.icon className={`w-6 h-6 ${item.color}`} />

@@ -69,3 +69,34 @@ Tambahkan URL deployment Anda (misal: `imam-school.vercel.app`) ke dalam daftar 
 
 ---
 *Build with ❤️ for better Indonesian Education.*
+
+
+## ☁️ Cloud Run Production (Docker)
+
+Arah scaling yang dipilih untuk fase ini: **Full Cloud Run production Dockerfile**.
+
+### 1) Build image
+```bash
+docker build -t imam-app .
+```
+
+### 2) Run locally (production mode)
+```bash
+docker run --rm -p 8080:8080 \
+  -e NODE_ENV=production \
+  -e GEMINI_API_KEY=your_key \
+  imam-app
+```
+
+### 3) Deploy to Cloud Run (contoh)
+```bash
+gcloud run deploy imam-app \
+  --source . \
+  --region asia-southeast2 \
+  --allow-unauthenticated \
+  --set-env-vars NODE_ENV=production,GEMINI_API_KEY=your_key
+```
+
+Catatan:
+- `server.ts` akan menjalankan mode production jika `NODE_ENV=production`.
+- Pada mode production, server melayani aset statis hasil build (`dist/`) tanpa Vite middleware.
