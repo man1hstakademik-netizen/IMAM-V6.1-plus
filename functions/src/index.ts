@@ -7,6 +7,12 @@ const db = admin.firestore();
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
+const buildEmailCandidates = (email: string): string[] => {
+  const trimmed = email.trim();
+  const lowered = normalizeEmail(trimmed);
+  return Array.from(new Set([trimmed, lowered]));
+};
+
 type LookupResult = { doc: FirebaseFirestore.QueryDocumentSnapshot | null; duplicate: boolean };
 
 const queryUnique = async (collection: 'students' | 'teachers', field: string, value: string): Promise<LookupResult> => {
@@ -18,22 +24,31 @@ const queryUnique = async (collection: 'students' | 'teachers', field: string, v
   return { doc: snap.empty ? null : snap.docs[0], duplicate: false };
 };
 
-const findStudentByAuthEmail = async (email: string): Promise<LookupResult> => {
+const findStudentByAuthEmail = async (emailCandidates: string[], emailLower: string): Promise<LookupResult> => {
   // Khusus Student, field email login berada di `userlogin`.
-  const byUserLogin = await queryUnique('students', 'userlogin', email);
-  if (byUserLogin.duplicate || byUserLogin.doc) return byUserLogin;
+  for (const candidate of emailCandidates) {
+    const byUserLogin = await queryUnique('students', 'userlogin', candidate);
+    if (byUserLogin.duplicate || byUserLogin.doc) return byUserLogin;
+  }
 
-  const byEmailLower = await queryUnique('students', 'emailLower', email);
+  const byEmailLower = await queryUnique('students', 'emailLower', emailLower);
   if (byEmailLower.duplicate || byEmailLower.doc) return byEmailLower;
 
-  return queryUnique('students', 'email', email);
+  for (const candidate of emailCandidates) {
+    const byEmail = await queryUnique('students', 'email', candidate);
+    if (byEmail.duplicate || byEmail.doc) return byEmail;
+  }
+
+  return { doc: null, duplicate: false };
 };
 
-const findTeacherByAuthEmail = async (email: string): Promise<LookupResult> => {
-  const byEmail = await queryUnique('teachers', 'email', email);
-  if (byEmail.duplicate || byEmail.doc) return byEmail;
+const findTeacherByAuthEmail = async (emailCandidates: string[], emailLower: string): Promise<LookupResult> => {
+  for (const candidate of emailCandidates) {
+    const byEmail = await queryUnique('teachers', 'email', candidate);
+    if (byEmail.duplicate || byEmail.doc) return byEmail;
+  }
 
-  return queryUnique('teachers', 'emailLower', email);
+  return queryUnique('teachers', 'emailLower', emailLower);
 };
 
 export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
@@ -42,22 +57,23 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
     return;
   }
 
-  const email = normalizeEmail(user.email);
+  const emailCandidates = buildEmailCandidates(user.email);
+  const emailLower = normalizeEmail(user.email);
 
   const [studentResult, teacherResult] = await Promise.all([
-    findStudentByAuthEmail(email),
-    findTeacherByAuthEmail(email),
+    findStudentByAuthEmail(emailCandidates, emailLower),
+    findTeacherByAuthEmail(emailCandidates, emailLower),
   ]);
 
   if (studentResult.duplicate || teacherResult.duplicate) {
-    functions.logger.error('Skip auto-link: duplicate identity value in master data', { uid: user.uid, email });
+    functions.logger.error('Skip auto-link: duplicate identity value in master data', { uid: user.uid, email: emailLower });
     return;
   }
 
   if (studentResult.doc && teacherResult.doc) {
     functions.logger.error('Skip auto-link: ambiguous role (student + teacher)', {
       uid: user.uid,
-      email,
+      email: emailLower,
       studentPath: studentResult.doc.ref.path,
       teacherPath: teacherResult.doc.ref.path,
     });
@@ -65,7 +81,7 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
   }
 
   if (!studentResult.doc && !teacherResult.doc) {
-    functions.logger.info('No student/teacher profile found for auth email', { uid: user.uid, email });
+    functions.logger.info('No student/teacher profile found for auth email', { uid: user.uid, email: emailLower });
     return;
   }
 
@@ -74,7 +90,7 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
     if (data.authUid && data.authUid !== user.uid) {
       functions.logger.warn('Skip overwrite existing student.authUid', {
         uid: user.uid,
-        email,
+        email: emailLower,
         studentId: studentResult.doc.id,
         currentAuthUid: data.authUid,
       });
@@ -86,8 +102,8 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
         authUid: user.uid,
         linkedUserId: user.uid,
         isClaimed: true,
-        userlogin: email,
-        emailLower: email,
+        userlogin: emailLower,
+        emailLower,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         linkedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
@@ -99,12 +115,13 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
       ...existingClaims,
       role: 'siswa',
       studentId: studentResult.doc.id,
+      schoolId: (data.schoolId as string | undefined) || existingClaims.schoolId || null,
       linkedProfilePath: studentResult.doc.ref.path,
     });
 
     functions.logger.info('Student account linked automatically', {
       uid: user.uid,
-      email,
+      email: emailLower,
       studentId: studentResult.doc.id,
     });
     return;
@@ -116,7 +133,7 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
   if (teacherData.authUid && teacherData.authUid !== user.uid) {
     functions.logger.warn('Skip overwrite existing teacher.authUid', {
       uid: user.uid,
-      email,
+      email: emailLower,
       teacherId: teacherDoc.id,
       currentAuthUid: teacherData.authUid,
     });
@@ -127,7 +144,7 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
     {
       authUid: user.uid,
       linkedUserId: user.uid,
-      emailLower: email,
+      emailLower,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       linkedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
@@ -139,12 +156,13 @@ export const autoLinkAccount = functions.auth.user().onCreate(async (user) => {
     ...existingClaims,
     role: 'guru',
     teacherId: teacherDoc.id,
+    schoolId: (teacherData.schoolId as string | undefined) || existingClaims.schoolId || null,
     linkedProfilePath: teacherDoc.ref.path,
   });
 
   functions.logger.info('Teacher account linked automatically', {
     uid: user.uid,
-    email,
+    email: emailLower,
     teacherId: teacherDoc.id,
   });
 });

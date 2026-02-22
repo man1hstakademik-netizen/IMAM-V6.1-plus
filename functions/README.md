@@ -6,10 +6,11 @@ Function `autoLinkAccount` berjalan saat akun Firebase Auth dibuat (`auth.user()
 2. Cari dokumen profil:
    - **students** pakai field utama `userlogin` (sesuai data IMAM), fallback ke `emailLower` / `email`.
    - **teachers** pakai `email`, fallback ke `emailLower`.
+   - Pencarian mencoba email asli + lowercase agar kompatibel data lama yang belum ternormalisasi.
 3. Jika role cocok dan unik:
    - **Student:** isi `authUid`, `linkedUserId`, `isClaimed`, normalisasi `userlogin`.
    - **Teacher:** isi `authUid`, `linkedUserId`.
-4. Set custom claims (`role`, `studentId`/`teacherId`, `linkedProfilePath`).
+4. Set custom claims (`role`, `studentId`/`teacherId`, `schoolId`, `linkedProfilePath`).
 
 ## Guardrails
 - Tidak overwrite jika `authUid` sudah terisi UID lain.
