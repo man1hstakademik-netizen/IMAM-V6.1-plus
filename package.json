@@ -1,11 +1,10 @@
-
 {
   "name": "imam-management-school",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node server.ts",
     "build": "vite build",
     "preview": "vite preview"
   },
