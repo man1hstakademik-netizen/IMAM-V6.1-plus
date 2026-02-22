@@ -23,6 +23,7 @@ interface ScanResult {
 const STUDENTS_CACHE_KEY = 'imam_students_cache_v1';
 const QR_SECRET_FALLBACK = 'IMAM_OFFLINE_QR_KEY_V2';
 const QR_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 30;
+const MAX_SYNC_RETRY = 10;
 
 const getStorage = () => {
     if (typeof window === 'undefined') return null;
@@ -144,7 +145,7 @@ const parseQrPayload = async (rawCode: string): Promise<{ code: string; signed: 
         if (typeof atob !== 'function') return { code: '', signed: true };
         const decoded = atob(b64);
         const payload = JSON.parse(decoded) as { id?: string; ts?: number; sig?: string };
-        if (!payload?.id || !payload?.sig || !payload?.ts) return { code: cleaned, signed: false };
+        if (!payload?.id || !payload?.sig || !payload?.ts) return { code: '', signed: true };
 
         const age = Math.abs(Date.now() - payload.ts);
         if (age > QR_MAX_AGE_MS) return { code: '', signed: true };
@@ -186,6 +187,14 @@ export const syncPendingAttendance = async (): Promise<{ synced: number; failed:
     let failed = 0;
 
     for (const item of queue) {
+        const retries = item.retryCount || 0;
+        if (retries >= MAX_SYNC_RETRY) {
+            failed += 1;
+            await deleteQueueItem(item.key);
+            console.warn('[attendance-sync] item dropped after max retries', { key: item.key, retries });
+            continue;
+        }
+
         try {
             const ref = db.collection('attendance').doc(item.attendanceId);
             const doc = await ref.get();
@@ -197,7 +206,7 @@ export const syncPendingAttendance = async (): Promise<{ synced: number; failed:
             failed += 1;
             await upsertQueueItem({
                 ...item,
-                retryCount: (item.retryCount || 0) + 1,
+                retryCount: retries + 1,
                 lastAttemptAt: Date.now()
             });
         }

@@ -81,20 +81,14 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
       }
 
       if (typeof navigator !== 'undefined' && navigator.onLine) {
-        const result = await syncPendingAttendance();
+        await runSyncNow(true);
         if (!mounted) return;
-        setPendingSync(await getPendingAttendanceCount());
-        if (result.synced > 0) {
-          toast.success(`Sinkronisasi berhasil: ${result.synced} data`);
-        }
       }
     };
 
     const handleOnline = async () => {
       setIsOffline(false);
-      const result = await syncPendingAttendance();
-      setPendingSync(await getPendingAttendanceCount());
-      if (result.synced > 0) toast.success(`Sinkronisasi berhasil: ${result.synced} data`);
+      await runSyncNow();
     };
 
     const handleOffline = async () => {
@@ -112,13 +106,30 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [runSyncNow]);
 
   const playFeedback = (type: 'success' | 'error') => {
     if (navigator.vibrate) {
         navigator.vibrate(type === 'success' ? 50 : [100, 30, 100]);
     }
   };
+
+  const runSyncNow = useCallback(async (silent = false) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setIsOffline(true);
+      if (!silent) toast.warning('Masih offline. Sinkronisasi ditunda.');
+      return;
+    }
+
+    const result = await syncPendingAttendance();
+    setPendingSync(await getPendingAttendanceCount());
+
+    if (result.synced > 0 && !silent) {
+      toast.success(`Sinkronisasi berhasil: ${result.synced} data`);
+    } else if (result.failed > 0 && !silent) {
+      toast.warning(`${result.failed} data belum tersinkron. Akan dicoba lagi otomatis.`);
+    }
+  }, []);
 
   const handleScan = useCallback(async (decodedText: string) => {
     const now = Date.now();
@@ -297,9 +308,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
                     </span>
                     <button
                       onClick={async () => {
-                        const r = await syncPendingAttendance();
-                        setPendingSync(await getPendingAttendanceCount());
-                        if (r.synced > 0) toast.success(`Sinkronisasi berhasil: ${r.synced} data`);
+                        await runSyncNow();
                       }}
                       className="px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border border-white/20 text-white/80 bg-white/10"
                     >
