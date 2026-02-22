@@ -65,7 +65,7 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
                     message: isHaid ? "STATUS HAID TERKONFIRMASI" : (isLate ? "MASUK (TERLAMBAT)" : "PRESENSI BERHASIL"),
                     student: { namaLengkap: 'SISWA SIMULASI', tingkatRombel: 'XII IPA 1', idUnik: code, jenisKelamin: 'Perempuan' } as any,
                     timestamp: recordValue,
-                    statusRecorded: isLate ? 'Terlambat' : 'Hadir'
+                    statusRecorded: 'Hadir'
                 });
             }, 400);
         });
@@ -106,9 +106,9 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
             }
         }
 
-        const isLate = (session === 'Masuk' || session === 'Masuk/Duha') && now > LATE_THRESHOLD;
         const updatePayload: any = { 
             [fieldName]: recordValue,
+            status: currentData?.status || 'Alpha',
             studentId: studentData.id,
             studentName: studentData.namaLengkap,
             class: studentData.tingkatRombel,
@@ -117,10 +117,14 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        if (!currentData?.status || currentData.status === 'Alpha' || currentData.status === 'Hadir' || currentData.status === 'Terlambat' || currentData.status === 'Haid') {
+        const currentStatus = currentData?.status || 'Alpha';
+        const isExcusedStatus = currentStatus === 'Izin' || currentStatus === 'Sakit';
+
+        if (!isExcusedStatus) {
             if (session === 'Masuk' || session === 'Masuk/Duha') {
-                updatePayload.status = isLate ? 'Terlambat' : 'Hadir';
-            } else if (!currentData?.status || currentData.status === 'Alpha' || currentData.status === 'Haid') {
+                // Status utama tetap empat pilar: Hadir, Izin, Sakit, Alpha.
+                updatePayload.status = 'Hadir';
+            } else if (currentStatus === 'Alpha') {
                 updatePayload.status = 'Hadir';
             }
         }
@@ -140,10 +144,10 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
 
         return {
             success: true,
-            message: isHaid ? "STATUS HAID DICATAT" : (isLate ? "MASUK (TERLAMBAT)" : "BERHASIL"),
+            message: isHaid ? "STATUS HAID DICATAT" : "BERHASIL",
             student: studentData,
             timestamp: recordValue,
-            statusRecorded: updatePayload.status || 'Hadir'
+            statusRecorded: (updatePayload.status as AttendanceStatus) || 'Hadir'
         };
 
     } catch (error: any) {
