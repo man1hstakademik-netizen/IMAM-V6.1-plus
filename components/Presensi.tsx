@@ -28,6 +28,7 @@ interface AttendanceRecord {
 const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => void }> = ({ onBack, onNavigate }) => {
   const [date, setDate] = useState<Date>(new Date());
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClass, setSelectedClass] = useState("10 A");
   const [allStudents, setAllStudents] = useState<Student[]>([]);
   const [attendanceSnapshot, setAttendanceSnapshot] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,14 +64,17 @@ const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => voi
 
   const displayData = useMemo(() => {
     const q = searchTerm.toLowerCase();
-    const filtered = allStudents.filter(s => String(s.namaLengkap).toLowerCase().includes(q));
+    const filtered = allStudents.filter(s => 
+      String(s.namaLengkap).toLowerCase().includes(q) && 
+      s.tingkatRombel === selectedClass
+    );
     const attMap = new Map(attendanceSnapshot.map(r => [r.studentId, r]));
     return filtered.map(s => attMap.get(s.id!) || {
         id: `${s.id}_${format(date, "yyyy-MM-dd")}`,
         studentId: s.id!, studentName: s.namaLengkap, class: s.tingkatRombel, status: 'Alpha',
         checkIn: null, checkOut: null, duha: null, zuhur: null, ashar: null
     } as any);
-  }, [allStudents, attendanceSnapshot, searchTerm, date]);
+  }, [allStudents, attendanceSnapshot, searchTerm, date, selectedClass]);
 
   const formatTime = (time: string | null) => {
       if (!time) return '-';
@@ -97,24 +101,41 @@ const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => voi
 
       <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="p-4 lg:p-6 space-y-6 pb-32">
-              <div className="bg-white dark:bg-[#151E32] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4">
-                  <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-1 rounded-xl shadow-inner">
+              <div className="bg-white dark:bg-[#151E32] p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-4">
+                  <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-1 rounded-xl shadow-inner w-full md:w-auto">
                       <button onClick={() => setDate(new Date(date.getTime() - 86400000))} className="p-2 hover:bg-white rounded-lg transition-all"><ChevronLeft className="w-4 h-4 text-slate-400"/></button>
                       <div className="px-2 text-center min-w-[100px]">
                           <h3 className="text-[10.5px] font-bold text-slate-800 dark:text-white">{format(date, "dd MMM yyyy")}</h3>
                       </div>
                       <button onClick={() => setDate(new Date(date.getTime() + 86400000))} className="p-2 hover:bg-white rounded-lg transition-all"><ChevronRight className="w-4 h-4 text-slate-400"/></button>
                   </div>
-                  <div className="relative flex-1 group">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input 
-                          type="text" placeholder="Filter nama siswa..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-                          className="w-full pl-11 py-3 bg-slate-50 dark:bg-slate-900 border-none rounded-xl text-[10.5px] font-medium focus:ring-2 focus:ring-indigo-500/20 shadow-inner"
-                      />
+                  
+                  <div className="flex flex-col md:flex-row gap-3 w-full">
+                      <div className="relative flex-1 group">
+                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                              type="text" placeholder="Filter nama siswa..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                              className="w-full pl-11 py-3 bg-slate-50 dark:bg-slate-900 border-none rounded-xl text-[10.5px] font-medium focus:ring-2 focus:ring-indigo-500/20 shadow-inner"
+                          />
+                      </div>
+                      
+                      <select 
+                          value={selectedClass} 
+                          onChange={e => setSelectedClass(e.target.value)}
+                          className="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-none rounded-xl text-[10.5px] font-bold focus:ring-2 focus:ring-indigo-500/20 shadow-inner text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
+                          <option value="10 A">Kelas 10 A</option>
+                          <option value="10 B">Kelas 10 B</option>
+                          <option value="11 A">Kelas 11 A</option>
+                          <option value="11 B">Kelas 11 B</option>
+                          <option value="12 A">Kelas 12 A</option>
+                          <option value="12 B">Kelas 12 B</option>
+                      </select>
+
+                      <button onClick={() => setIsHaidMode(!isHaidMode)} className={`px-5 py-3 rounded-xl text-[10.5px] font-bold border transition-all whitespace-nowrap ${isHaidMode ? 'bg-pink-600 text-white border-pink-400 animate-pulse shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400'}`}>
+                          <HeartIcon className="w-4 h-4 inline-block mr-2" /> Quick haid
+                      </button>
                   </div>
-                  <button onClick={() => setIsHaidMode(!isHaidMode)} className={`px-5 py-3 rounded-xl text-[10.5px] font-bold border transition-all ${isHaidMode ? 'bg-pink-600 text-white border-pink-400 animate-pulse shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400'}`}>
-                      <HeartIcon className="w-4 h-4 inline-block mr-2" /> Quick haid
-                  </button>
               </div>
 
               <div className="bg-white dark:bg-[#151E32] rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
@@ -125,33 +146,39 @@ const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => voi
                                   <th className="text-center w-10">No</th>
                                   <th>Nama lengkap</th>
                                   <th className="text-center">Kelas</th>
-                                  <th className="text-center">Masuk</th>
-                                  <th className="text-center">Duha</th>
-                                  <th className="text-center">Pulang</th>
+                                  <th className="text-center whitespace-nowrap">Masuk</th>
+                                  <th className="text-center whitespace-nowrap">Duha</th>
+                                  <th className="text-center whitespace-nowrap">Zuhur</th>
+                                  <th className="text-center whitespace-nowrap">Ashar</th>
+                                  <th className="text-center whitespace-nowrap">Pulang</th>
                                   <th className="text-center w-20">Status</th>
+                                  <th className="text-center w-20">Ket</th>
                               </tr>
                           </thead>
                           <tbody>
                               {loading ? (
-                                  <tr><td colSpan={7} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500 opacity-20" /></td></tr>
+                                  <tr><td colSpan={10} className="py-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-500 opacity-20" /></td></tr>
                               ) : displayData.length > 0 ? (
                                   displayData.map((r, i) => (
                                       <tr key={r.id}>
                                           <td className="text-center font-mono text-slate-400">{i + 1}</td>
                                           <td className="font-bold capitalize">{r.studentName}</td>
                                           <td className="text-center font-medium text-slate-500">{r.class}</td>
-                                          <td className="text-center font-mono">{formatTime(r.checkIn)}</td>
-                                          <td className="text-center font-mono">{formatTime(r.duha)}</td>
-                                          <td className="text-center font-mono">{formatTime(r.checkOut)}</td>
+                                          <td className="text-center font-mono text-[9px]">{formatTime(r.checkIn)}</td>
+                                          <td className="text-center font-mono text-[9px]">{formatTime(r.duha)}</td>
+                                          <td className="text-center font-mono text-[9px]">{formatTime(r.zuhur)}</td>
+                                          <td className="text-center font-mono text-[9px]">{formatTime(r.ashar)}</td>
+                                          <td className="text-center font-mono text-[9px]">{formatTime(r.checkOut)}</td>
                                           <td className="text-center">
-                                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${r.status === 'Alpha' ? 'bg-red-50 text-red-600' : r.status === 'Haid' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                                              <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${r.status === 'Alpha' ? 'bg-red-50 text-red-600' : r.status === 'Haid' ? 'bg-rose-50 text-rose-600' : r.status === 'Terlambat' ? 'bg-yellow-50 text-yellow-600' : 'bg-emerald-50 text-emerald-600'}`}>
                                                   {r.status}
                                               </span>
                                           </td>
+                                          <td className="text-center text-[9px] text-slate-500 font-medium">-</td>
                                       </tr>
                                   ))
                               ) : (
-                                  <tr><td colSpan={7} className="py-20 text-center text-slate-400 font-medium">Tidak ada data siswa untuk ditampilkan</td></tr>
+                                  <tr><td colSpan={10} className="py-20 text-center text-slate-400 font-medium">Tidak ada siswa di kelas {selectedClass}</td></tr>
                               )}
                           </tbody>
                       </table>
