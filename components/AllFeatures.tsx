@@ -41,7 +41,6 @@ const AllFeatures: React.FC<AllFeaturesProps> = ({ onBack, onNavigate, userRole 
 
     { label: 'Scan QR', icon: CameraIcon, view: ViewState.SCANNER, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH] },
     { label: 'Presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
-    { label: 'Log Absen', icon: ClockIcon, view: ViewState.ATTENDANCE_HISTORY, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/30' },
     { label: 'Poin', icon: ShieldCheckIcon, view: ViewState.POINTS, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/30' },
     { label: 'Siswa', icon: UsersIcon, view: ViewState.STUDENTS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
     { label: 'Guru', icon: BriefcaseIcon, view: ViewState.TEACHERS, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30', roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },

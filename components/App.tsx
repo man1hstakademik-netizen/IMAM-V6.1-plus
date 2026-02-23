@@ -31,7 +31,6 @@ import { auth, db, isMockMode } from '../services/firebase';
 
 // Feature Views
 import AllFeatures from './AllFeatures';
-import AttendanceHistory from './AttendanceHistory';
 import QRScanner from './QRScanner';
 import TeachingJournal from './TeachingJournal';
 import Assignments from './Assignments';
@@ -44,7 +43,6 @@ import CreateAccount from './CreateAccount';
 import DeveloperConsole from './DeveloperConsole';
 import LoginHistory from './LoginHistory';
 import About from './About';
-import History from './History';
 import Premium from './Premium';
 import News from './News';
 import MadrasahInfo from './MadrasahInfo';
@@ -167,7 +165,6 @@ const App: React.FC = () => {
       case ViewState.ABOUT: return <About onBack={backToDashboard} />;
       case ViewState.LOGIN_HISTORY: return <LoginHistory onBack={backToDashboard} />;
       case ViewState.ID_CARD: return <IDCard onBack={backToDashboard} />;
-      case ViewState.HISTORY: return <History onBack={backToDashboard} userRole={userRole} />;
       case ViewState.PREMIUM: return <Premium onBack={backToDashboard} />;
       case ViewState.ADVISOR: return <Advisor onBack={backToDashboard} />;
       case ViewState.MADRASAH_INFO: return <MadrasahInfo onBack={backToDashboard} />;
@@ -177,7 +174,6 @@ const App: React.FC = () => {
       // PROTECTED ROUTES
       case ViewState.CLASSES: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><ClassList onBack={backToDashboard} userRole={userRole} /></ProtectedRoute>;
       case ViewState.SCANNER: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><QRScanner onBack={backToDashboard} /></ProtectedRoute>;
-      case ViewState.ATTENDANCE_HISTORY: return <AttendanceHistory onBack={backToDashboard} onNavigate={handleNavigate} userRole={userRole} />;
       case ViewState.PRESENSI: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><Presensi onBack={backToDashboard} onNavigate={handleNavigate} /></ProtectedRoute>;
       case ViewState.CONTENT_GENERATION: return <ProtectedRoute allowedRoles={staffAbove} userRole={userRole} onBack={backToDashboard}><ContentGeneration onBack={backToDashboard} /></ProtectedRoute>;
       case ViewState.REPORTS: return <ProtectedRoute allowedRoles={adminDevOnly} userRole={userRole} onBack={backToDashboard}><Reports onBack={backToDashboard} /></ProtectedRoute>;

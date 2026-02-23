@@ -43,8 +43,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentView, onNavigate, userRole = U
     { label: 'Tugas & PR', icon: ClipboardDocumentListIcon, view: ViewState.ASSIGNMENTS },
     { label: 'Rapor digital', icon: AcademicCapIcon, view: ViewState.REPORT_CARDS },
     { label: 'Scan QR presensi', icon: QrCodeIcon, view: ViewState.SCANNER, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU, UserRole.WALI_KELAS, UserRole.KEPALA_MADRASAH] },
-    { label: 'Input presensi', icon: QrCodeIcon, view: ViewState.PRESENSI, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.STAF_TU] },
-    { label: 'Riwayat absen', icon: CalendarDaysIcon, view: ViewState.ATTENDANCE_HISTORY },
     { label: 'Layanan kemenag', icon: BuildingLibraryIcon, view: ViewState.KEMENAG_HUB },
     { label: 'Live chat bantuan', icon: HeadsetIcon, view: ViewState.ADVISOR },
     { label: 'Alat bantu guru AI', icon: SparklesIcon, view: ViewState.CONTENT_GENERATION, roles: [UserRole.ADMIN, UserRole.DEVELOPER, UserRole.GURU, UserRole.WALI_KELAS] },
