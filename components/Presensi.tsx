@@ -1,9 +1,3 @@
-
-/**
- * @license
- * IMAM System - Integrated Madrasah Academic Manager
- */
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { db, isMockMode } from '../services/firebase';
 import { getStudents } from '../services/studentService';
@@ -118,7 +112,7 @@ const Presensi: React.FC<{ onBack: () => void, onNavigate: (v: ViewState) => voi
                           className="w-full pl-11 py-3 bg-slate-50 dark:bg-slate-900 border-none rounded-xl text-[10.5px] font-medium focus:ring-2 focus:ring-indigo-500/20 shadow-inner"
                       />
                   </div>
-                  <button onClick={() => setIsHaidMode(!isHaidMode)} className={`px-5 py-3 rounded-xl text-[10.5px] font-bold border transition-all ${isHaidMode ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400'}`}>
+                  <button onClick={() => setIsHaidMode(!isHaidMode)} className={`px-5 py-3 rounded-xl text-[10.5px] font-bold border transition-all ${isHaidMode ? 'bg-pink-600 text-white border-pink-400 animate-pulse shadow-lg' : 'bg-white dark:bg-slate-800 text-slate-400'}`}>
                       <HeartIcon className="w-4 h-4 inline-block mr-2" /> Quick haid
                   </button>
               </div>

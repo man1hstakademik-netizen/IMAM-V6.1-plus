@@ -44,7 +44,7 @@ export const getSubjects = async (): Promise<Subject[]> => {
     }
 };
 
-export const getGradesBySubject = async (subjectId: string): Promise<StudentGrade[]> => {
+export const getGradesBySubject = async (subjectId: string, academicYearId?: string): Promise<StudentGrade[]> => {
     if (isMockMode) {
         // Mock return empty or simulate local storage if needed, 
         // but typically input starts empty or cached in component for mock
@@ -53,10 +53,14 @@ export const getGradesBySubject = async (subjectId: string): Promise<StudentGrad
 
     try {
         if (!db) throw new Error("Database not initialized");
-        const snapshot = await db.collection(COLLECTION_GRADES)
-            .where('subjectId', '==', subjectId)
-            .get();
+        let query: any = db.collection(COLLECTION_GRADES)
+            .where('subjectId', '==', subjectId);
         
+        if (academicYearId) {
+            query = query.where('academicYearId', '==', academicYearId);
+        }
+        
+        const snapshot = await query.get();
         return snapshot.docs.map(doc => doc.data() as StudentGrade);
     } catch (error) {
         console.error("Error fetching grades:", error);
@@ -64,22 +68,26 @@ export const getGradesBySubject = async (subjectId: string): Promise<StudentGrad
     }
 };
 
-export const getGradesByStudent = async (studentId: string): Promise<StudentGrade[]> => {
+export const getGradesByStudent = async (studentId: string, academicYearId?: string): Promise<StudentGrade[]> => {
     if (isMockMode) {
         // Return dummy grades for the mock student view
         return [
-            { subjectId: 'MTK', studentId, nilaiHarian: 85, nilaiUTS: 80, nilaiUAS: 90, nilaiAkhir: 85 },
-            { subjectId: 'FIS', studentId, nilaiHarian: 78, nilaiUTS: 82, nilaiUAS: 75, nilaiAkhir: 78.3 },
-            { subjectId: 'BIO', studentId, nilaiHarian: 88, nilaiUTS: 85, nilaiUAS: 89, nilaiAkhir: 87.3 },
+            { subjectId: 'MTK', studentId, academicYearId: '2024', nilaiHarian: 85, nilaiUTS: 80, nilaiUAS: 90, nilaiAkhir: 85, createdAt: new Date(), createdBy: 'system', schemaVersion: 1 },
+            { subjectId: 'FIS', studentId, academicYearId: '2024', nilaiHarian: 78, nilaiUTS: 82, nilaiUAS: 75, nilaiAkhir: 78.3, createdAt: new Date(), createdBy: 'system', schemaVersion: 1 },
+            { subjectId: 'BIO', studentId, academicYearId: '2024', nilaiHarian: 88, nilaiUTS: 85, nilaiUAS: 89, nilaiAkhir: 87.3, createdAt: new Date(), createdBy: 'system', schemaVersion: 1 },
         ];
     }
 
     try {
         if (!db) throw new Error("Database not initialized");
-        const snapshot = await db.collection(COLLECTION_GRADES)
-            .where('studentId', '==', studentId)
-            .get();
+        let query: any = db.collection(COLLECTION_GRADES)
+            .where('studentId', '==', studentId);
         
+        if (academicYearId) {
+            query = query.where('academicYearId', '==', academicYearId);
+        }
+        
+        const snapshot = await query.get();
         return snapshot.docs.map(doc => doc.data() as StudentGrade);
     } catch (error) {
         console.error("Error fetching student grades:", error);

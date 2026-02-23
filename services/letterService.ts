@@ -1,4 +1,6 @@
 
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
 import { db, isMockMode, auth } from './firebase';
 import { LetterRequest, LetterStatus, UserRole } from '../types';
 
@@ -14,7 +16,11 @@ const MOCK_LETTERS: LetterRequest[] = [
         description: 'Untuk keperluan beasiswa prestasi.',
         date: new Date(Date.now() - 86400000).toISOString(), // Kemarin
         status: 'Signed',
-        letterNumber: '421/105/MAN1HST/2024'
+        letterNumber: '421/105/MAN1HST/2024',
+        schemaVersion: 1,
+        createdAt: new Date(Date.now() - 86400000),
+        updatedAt: new Date(Date.now() - 86400000),
+        createdBy: 'system'
     },
     {
         id: 'req-2',
@@ -24,7 +30,11 @@ const MOCK_LETTERS: LetterRequest[] = [
         type: 'Surat Tugas',
         description: 'Menghadiri MGMP Matematika di Kandangan.',
         date: new Date().toISOString(),
-        status: 'Pending'
+        status: 'Pending',
+        schemaVersion: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: 'system'
     },
     {
         id: 'req-3',
@@ -34,7 +44,11 @@ const MOCK_LETTERS: LetterRequest[] = [
         type: 'Legalisir Ijazah',
         description: 'Mohon legalisir 5 rangkap.',
         date: new Date(Date.now() - 172800000).toISOString(),
-        status: 'Verified'
+        status: 'Verified',
+        schemaVersion: 1,
+        createdAt: new Date(Date.now() - 172800000),
+        updatedAt: new Date(Date.now() - 172800000),
+        createdBy: 'system'
     }
 ];
 
@@ -80,7 +94,14 @@ export const createLetterRequest = async (request: Omit<LetterRequest, 'id'>): P
 
     try {
         if (!db) throw new Error("Database not initialized");
-        await db.collection(COLLECTION_NAME).add(request);
+        const letterDoc = {
+            ...request,
+            schemaVersion: 1,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdBy: auth?.currentUser?.uid || 'unknown'
+        };
+        await db.collection(COLLECTION_NAME).add(letterDoc);
     } catch (error) {
         console.error("Error creating letter:", error);
         throw error;
@@ -99,7 +120,13 @@ export const updateLetterStatus = async (id: string, status: LetterStatus, data?
 
     try {
         if (!db) throw new Error("Database not initialized");
-        await db.collection(COLLECTION_NAME).doc(id).update({ status, ...data });
+        const updateData = {
+            status,
+            ...data,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedBy: auth?.currentUser?.uid || 'unknown'
+        };
+        await db.collection(COLLECTION_NAME).doc(id).update(updateData);
     } catch (error) {
         console.error("Error updating letter:", error);
         throw error;

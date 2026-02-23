@@ -112,23 +112,34 @@ export const recordAttendanceByScan = async (rawCode: string, session: Attendanc
         const isLate = (session === 'Masuk' || session === 'Masuk/Duha') && now > LATE_THRESHOLD;
         const updatePayload: any = { 
             [fieldName]: recordValue,
-            studentId: studentData.id,
-            studentName: studentData.namaLengkap,
-            class: studentData.tingkatRombel,
-            idUnik: studentData.idUnik,
+            studentId: studentData.idUnik, // Use idUnik as primary key
+            classId: studentData.tingkatRombel, // Add classId (can be refactored to actual classId later)
             date: today,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            status: isHaid ? 'Haid' : (isLate ? 'Terlambat' : 'Hadir'),
+            
+            // Schema v1 fields
+            schemaVersion: 1,
+            syncStatus: 'pending', // Will be synced to server
+            version: 1, // For conflict resolution
+            deviceId: 'browser', // TODO: get actual device ID
+            recordedBy: auth?.currentUser?.uid || 'unknown',
+            recordedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            
+            // Denormalized cache (can be rebuilt from DB)
+            studentNameCache: studentData.namaLengkap,
+            academicYearId: new Date().getFullYear().toString(), // TODO: get current academicYearId
+            isDenormalized: true,
+            
+            // Legacy fields (deprecated but kept for compatibility)
+            idUnik: studentData.idUnik
         };
 
-        if (isHaid) {
-            updatePayload.status = 'Haid';
-        } else if (!currentData?.status || currentData.status === 'Alpha' || currentData.status === 'Hadir' || currentData.status === 'Terlambat') {
-            if (session === 'Masuk' || session === 'Masuk/Duha') {
-                updatePayload.status = isLate ? 'Terlambat' : 'Hadir';
-            }
-        }
-
         if (docSnapshot?.exists) {
+            updatePayload.version = (currentData?.version || 1) + 1;
+            updatePayload.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+            updatePayload.lastModifiedBy = auth?.currentUser?.uid || 'unknown';
             await attendanceRef.update(updatePayload);
         } else {
             await attendanceRef.set(updatePayload);

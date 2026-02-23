@@ -59,6 +59,22 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
   const sessionRef = useRef(session);
   const haidRef = useRef(isHaidMode);
   
+  const stopCamera = async () => {
+    if (scannerRef.current?.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        setCameraActive(false);
+      } catch (e) {
+        console.error('Error stopping camera:', e);
+      }
+    }
+  };
+
+  const handleBack = async () => {
+    await stopCamera();
+    onBack();
+  };
+  
   useEffect(() => {
     sessionRef.current = session;
     if (!['Duha', 'Zuhur', 'Ashar'].includes(session)) {
@@ -175,7 +191,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
   };
 
   return (
-    <Layout title="IMAM Hyper Scan" subtitle={`${session} Mode • Sensor v2.1`} icon={CameraIcon} onBack={onBack}>
+    <Layout title="IMAM Hyper Scan" subtitle={`${session} Mode • Sensor v2.1`} icon={CameraIcon} onBack={handleBack}>
       <div className="flex flex-col h-full bg-black relative overflow-hidden select-none">
           
           <div className="absolute top-4 inset-x-4 z-[70] flex flex-col gap-3 pointer-events-none">
@@ -185,8 +201,8 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
                     className="bg-white/95 dark:bg-[#0B1121]/95 backdrop-blur-2xl rounded-3xl p-5 shadow-2xl border border-white/20 flex items-center gap-5 animate-in fade-in slide-in-from-top-4 duration-500"
                   >
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-lg text-white ${
-                          item.status === 'error' ? 'bg-rose-600' : 
-                          item.status === 'haid' ? 'bg-rose-500' :
+                          item.status === 'error' ? 'bg-red-600' : 
+                          item.status === 'haid' ? 'bg-pink-500' :
                           item.status === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'
                       }`}>
                           {item.status === 'error' ? <XCircleIcon className="w-9 h-9" /> : 
@@ -231,7 +247,7 @@ const QRScanner: React.FC<QRScannerProps> = ({ onBack }) => {
                   {isPrayerSession && (
                     <button
                       onClick={() => setIsHaidMode(prev => !prev)}
-                      className={`self-start px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${isHaidMode ? 'bg-rose-600 text-white border-rose-400 shadow-lg animate-pulse' : 'bg-white/10 text-white border-white/20'}`}
+                      className={`self-start px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${isHaidMode ? 'bg-pink-600 text-white border-pink-400 shadow-lg animate-pulse' : 'bg-white/10 text-white border-white/20'}`}
                     >
                       <HeartIcon className="w-3.5 h-3.5 inline-block mr-1.5" />
                       {isHaidMode ? 'Mode Haid Aktif' : 'Mode Haid'}
