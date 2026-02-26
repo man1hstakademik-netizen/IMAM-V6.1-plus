@@ -19,7 +19,6 @@ export enum ViewState {
   SCHEDULE = 'SCHEDULE',
   SCANNER = 'SCANNER',
   ALL_FEATURES = 'ALL_FEATURES',
-  ATTENDANCE_HISTORY = 'ATTENDANCE_HISTORY',
   ACADEMIC_YEAR = 'ACADEMIC_YEAR',
   JOURNAL = 'JOURNAL',
   ASSIGNMENTS = 'ASSIGNMENTS',
@@ -33,7 +32,6 @@ export enum ViewState {
   DEVELOPER = 'DEVELOPER',
   LOGIN_HISTORY = 'LOGIN_HISTORY',
   ABOUT = 'ABOUT',
-  HISTORY = 'HISTORY', 
   PREMIUM = 'PREMIUM', 
   NEWS = 'NEWS',
   MADRASAH_INFO = 'MADRASAH_INFO',
@@ -97,21 +95,64 @@ export interface MadrasahData {
   photo?: string;
 }
 
-export interface ClassData {
-    id?: string;
-    name: string;
-    level: string; 
-    teacherId?: string; 
-    teacherName?: string;
-    academicYear: string;
-    captainId?: string;
-    captainName?: string;
-    subjects?: string[];
+/**
+ * User Profile (Auth layer)
+ * Document ID: authUid (from Firebase Auth)
+ * Links to either Student or Teacher profile
+ */
+export interface UserProfile {
+  authUid: string; // PRIMARY KEY - document ID in Firestore
+  email: string;
+  role: UserRole;
+  profileType: 'student' | 'teacher' | 'admin' | 'staff';
+  profileId?: string; // idUnik for student or nip for teacher
+  isActive: boolean;
+  lastLoginAt?: any; // Firebase Timestamp
+  
+  // Secondary roles for multi-role users
+  secondaryRoles?: UserRole[];
+  
+  // Audit trail
+  createdAt: any;
+  updatedAt: any;
+  createdBy?: string;
+  updatedBy?: string;
+  
+  schemaVersion: 1;
 }
 
+export interface ClassData {
+    id?: string;
+    academicYearId: string; // REQUIRED - root key
+    name: string;
+    level: string; 
+    teacherId?: string; // PRIMARY RELATION - use ID only
+    academicYear: string; // Deprecated - use academicYearId instead
+    captainId?: string; // PRIMARY RELATION
+    subjects?: string[]; // Could be subjectIds
+    
+    // Denormalized cache
+    teacherNameCache?: string;
+    captainNameCache?: string;
+    isDenormalized?: boolean;
+    
+    // Audit trail
+    createdAt?: any;
+    updatedAt?: any;
+    createdBy?: string;
+    updatedBy?: string;
+    
+    schemaVersion: 1;
+}
+
+/**
+ * Student Entity
+ * Primary ID: idUnik (document ID in Firestore)
+ * docId should be: students/{idUnik}
+ * Never use 'id' field - it's redundant. Use 'idUnik' as single source of truth.
+ */
 export interface Student {
-  id?: string;
-  idUnik?: string;
+  idUnik: string; // PRIMARY KEY - document ID in Firestore
   userlogin?: string;
   namaLengkap: string;
   nisn: string;
@@ -152,26 +193,61 @@ export interface Student {
   noAktaLahir?: string;
   peminatan?: string;
   accountStatus?: string;
-  linkedUserId?: string;
+  authUid?: string; // Link to users/{authUid} - NOT linkedUserId
   disciplinePoints?: number;
+  schemaVersion: 1;
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any; // Firebase Timestamp
+  createdBy?: string; // userId who created
+  updatedBy?: string; // userId who last updated
 }
 
 // Added 'Terlambat' and 'Haid' to AttendanceStatus to fix assignment errors in services and components
 export type AttendanceStatus = 'Hadir' | 'Terlambat' | 'Sakit' | 'Izin' | 'Alpha' | 'Haid';
 
+/**
+ * Attendance Record
+ * Primary ID: uuid4 
+ * Collection path: attendance/{academicYearId}/records/{attendanceId}
+ * OR: students/{studentId}/attendance/{attendanceId}
+ * 
+ * One record = one day (5 sessions per day model)
+ * Alternative future model: one record = one session
+ */
 export interface AttendanceRecord {
-    id: string;
-    studentId: string;
-    studentName: string;
-    gender?: string;
-    class: string;
-    date: string;
-    status: AttendanceStatus;
-    checkIn: string | null;
-    duha: string | null;
-    zuhur: string | null;
-    ashar: string | null;
-    checkOut: string | null;
+  id: string; // UUID
+  academicYearId: string; // REQUIRED - root key for data isolation
+  studentId: string; // PRIMARY RELATION - use ID only
+  classId: string; // PRIMARY RELATION - use ID only
+  date: string; // ISO 8601 format (could migrate to Timestamp)
+  status: AttendanceStatus;
+  
+  // 5 prayer sessions per day (5 sesi model)
+  checkIn: string | null; // HH:mm format or ISO timestamp
+  duha: string | null;
+  zuhur: string | null;
+  ashar: string | null;
+  checkOut: string | null;
+  
+  // Offline & Sync metadata (PENTING for offline-first)
+  deviceId?: string; // Device yang recording
+  syncStatus: 'pending' | 'synced'; // REQUIRED
+  version: number; // For conflict resolution
+  
+  // Audit trail
+  recordedBy: string; // userId who recorded
+  recordedAt: any; // Firebase Timestamp
+  lastModifiedBy?: string;
+  lastModifiedAt?: any; // Firebase Timestamp
+  createdAt: any;
+  updatedAt: any;
+  
+  // Denormalized cache (optional, can be rebuilt)
+  studentNameCache?: string;
+  classNameCache?: string;
+  isDenormalized?: boolean;
+  
+  schemaVersion: 1;
 }
 
 export interface ChatMessage {
@@ -181,25 +257,37 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
+/**
+ * Teacher Entity
+ * Primary ID: nip (document ID in Firestore)
+ * docId should be: teachers/{nip}
+ * Never use 'id' field - it's redundant. Use 'nip' as single source of truth.
+ */
 export interface Teacher {
-  id?: string;
+  nip: string; // PRIMARY KEY - document ID in Firestore
   name: string;
-  nip: string;
   subject: string;
   status: 'PNS' | 'PPPK' | 'GTY' | 'Honorer';
   phone?: string;
   email?: string;
   birthDate?: string;
   address?: string;
-  linkedUserId?: string;
+  authUid?: string; // Link to users/{authUid}
+  // Denormalized fields (cache only - can be rebuilt)
+  isDenormalized?: boolean;
+  schemaVersion: 1;
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any; // Firebase Timestamp
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export type LetterStatus = 'Pending' | 'Verified' | 'Validated' | 'Signed' | 'Ditolak';
 
 export interface LetterRequest {
   id?: string;
-  userId: string;
-  userName: string;
+  userId: string; // PRIMARY RELATION
+  userName: string; // Cache only - use userId as primary
   userRole: UserRole;
   type: string;
   description: string;
@@ -208,48 +296,104 @@ export interface LetterRequest {
   letterNumber?: string;
   adminNote?: string;
   verifiedBy?: string;
-  verifiedAt?: string;
+  verifiedAt?: any; // Firebase Timestamp
   validatedBy?: string;
-  validatedAt?: string;
+  validatedAt?: any;
   signedBy?: string;
-  signedAt?: string;
+  signedAt?: any;
   digitalSignatureHash?: string;
+  
+  isDenormalized?: boolean;
+  
+  // Complete audit trail
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any;
+  createdBy: string;
+  updatedBy?: string;
+  
+  schemaVersion: 1;
 }
 
 export interface StudentGrade {
-  subjectId: string;
-  studentId: string;
+  id?: string;
+  academicYearId: string; // REQUIRED - root key
+  subjectId: string; // PRIMARY RELATION
+  studentId: string; // PRIMARY RELATION
   nilaiHarian: number;
   nilaiUTS: number;
   nilaiUAS: number;
   nilaiAkhir: number;
+  
+  // Audit trail
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any;
+  createdBy: string;
+  updatedBy?: string;
+  
+  schemaVersion: 1;
 }
 
+/**
+ * Journal Entry
+ * Primary relations: teacherId, classId, subjectId, academicYearId
+ * All based on ID - names are cache only
+ */
 export interface JournalEntry {
   id?: string;
-  teacherId: string;
-  teacherName: string;
-  className: string;
-  subject: string;
-  date: string;
-  jamKe: string;
+  academicYearId: string; // REQUIRED - root key
+  teacherId: string; // PRIMARY RELATION
+  classId: string; // PRIMARY RELATION
+  subjectId: string; // PRIMARY RELATION
+  date: string; // ISO 8601
+  jamKe: string; // period/jam ke berapa
   materi: string;
   catatan?: string;
-  createdAt?: string;
+  
+  // Denormalized cache (optional)
+  teacherNameCache?: string;
+  classNameCache?: string;
+  subjectNameCache?: string;
+  isDenormalized?: boolean;
+  
+  // Audit trail
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any; // Firebase Timestamp
+  createdBy: string; // userId
+  updatedBy?: string;
+  
+  schemaVersion: 1;
 }
 
+/**
+ * Assignment
+ * Primary relations: teacherId, classId, subjectId, academicYearId
+ * All based on ID - names are cache only
+ */
 export interface Assignment {
   id?: string;
+  academicYearId: string; // REQUIRED
   title: string;
   description: string;
-  subject: string;
-  className: string;
-  teacherId: string;
-  teacherName: string;
-  dueDate: string;
+  subjectId: string; // PRIMARY RELATION
+  classId: string; // PRIMARY RELATION
+  teacherId: string; // PRIMARY RELATION
+  dueDate: string; // ISO 8601
   status: 'Open' | 'Closed';
   priority?: 'High' | 'Medium' | 'Low';
-  createdAt?: string;
+  
+  // Denormalized cache
+  teacherNameCache?: string;
+  classNameCache?: string;
+  subjectNameCache?: string;
+  isDenormalized?: boolean;
+  
+  // Audit trail
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any; // Firebase Timestamp
+  createdBy: string;
+  updatedBy?: string;
+  
+  schemaVersion: 1;
 }
 
 export interface LoginHistoryEntry {
@@ -270,14 +414,27 @@ export interface ViolationMaster {
 
 export interface DisciplineLog {
   id: string;
-  studentId: string;
-  studentName: string;
+  studentId: string; // PRIMARY RELATION - use ID only
   type: 'Violation' | 'Reward';
-  ruleId: string;
-  ruleDescription: string;
+  violationId: string; // PRIMARY RELATION - use ID only
   points: number;
-  date: string;
-  recordedBy: string;
+  date: string; // ISO 8601
+  recordedBy: string; // userId
   status: 'Approved' | 'Pending' | 'Rejected';
   note?: string;
+  
+  // Denormalized cache
+  studentNameCache?: string;
+  violationDescriptionCache?: string;
+  isDenormalized?: boolean;
+  
+  // Complete audit trail
+  createdAt: any; // Firebase Timestamp
+  updatedAt: any;
+  createdBy: string;
+  updatedBy?: string;
+  approvedBy?: string;
+  approvedAt?: any;
+  
+  schemaVersion: 1;
 }

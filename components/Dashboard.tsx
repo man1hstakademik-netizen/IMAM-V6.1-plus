@@ -145,19 +145,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userRole, onLogout })
         </div>
 
         <div ref={scrollRef} className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide -mx-6 px-6 snap-x snap-mandatory">
-            {isStudent && (
-                <div onClick={() => onNavigate(ViewState.ATTENDANCE_HISTORY)} className="min-w-[280px] snap-center bg-indigo-600 rounded-[2.5rem] p-6 text-white shadow-xl cursor-pointer relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 rotate-12"><CheckCircleIcon className="w-24 h-24" /></div>
-                    <p className="text-[10px] font-bold opacity-70 mb-1 uppercase tracking-widest">Kehadiran Hari Ini</p>
-                    <h3 className="text-xl font-black mb-4">
-                        {todayAttendance ? todayAttendance.status : 'Belum Absen'}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold bg-white/20 px-4 py-1.5 rounded-xl">Lihat Riwayat</span>
-                        <ClockIcon className="w-4 h-4 opacity-40" />
-                    </div>
-                </div>
-            )}
             
             {!isStudent && (
                 <>

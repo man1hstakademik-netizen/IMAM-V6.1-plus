@@ -31,9 +31,15 @@ service cloud.firestore {
       );
     }
 
+    // Validate academic year exists (KRITIS)
+    function academicYearExists(yearId) {
+      return exists(/databases/$(database)/documents/academic_years/$(yearId));
+    }
+
     // --- Collection Rules ---
 
-    // Data User & Profil
+    // User Profiles (Auth layer)
+    // docId = authUid (Firebase Auth UID)
     match /users/{userId} {
       // Izinkan baca jika masuk log (untuk pencarian identitas/ID Card)
       allow read: if isSignedIn();
@@ -43,6 +49,11 @@ service cloud.firestore {
       allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       // Admin bisa hapus akun user
       allow delete: if isAdmin();
+      
+      // Validate required fields
+      allow write: if request.resource.data.schemaVersion == 1 &&
+                      request.resource.data.profileType in ['student', 'teacher', 'admin', 'staff'] &&
+                      request.resource.data.email != null;
     }
 
     // Data Master (Siswa & Guru)
@@ -61,16 +72,37 @@ service cloud.firestore {
     match /journals/{id} {
       allow read: if isSignedIn();
       allow write: if isStaff();
+      
+      allow create: if request.resource.data.academicYearId != null &&
+                       request.resource.data.teacherId != null &&
+                       request.resource.data.classId != null &&
+                       request.resource.data.schemaVersion == 1 &&
+                       request.resource.data.createdAt != null &&
+                       academicYearExists(request.resource.data.academicYearId);
     }
     match /assignments/{id} {
       allow read: if isSignedIn();
       allow write: if isStaff();
+      
+      allow create: if request.resource.data.academicYearId != null &&
+                       request.resource.data.teacherId != null &&
+                       request.resource.data.classId != null &&
+                       request.resource.data.schemaVersion == 1 &&
+                       request.resource.data.createdAt != null &&
+                       academicYearExists(request.resource.data.academicYearId);
     }
     match /grades/{id} {
       allow read: if isSignedIn() && (
-        isStaff() || (userDocExists() && getUserData().studentId == resource.data.studentId)
+        isStaff() || (userDocExists() && getUserData().profileId == resource.data.studentId)
       );
       allow write: if isStaff();
+      
+      allow create: if request.resource.data.academicYearId != null &&
+                       request.resource.data.studentId != null &&
+                       request.resource.data.subjectId != null &&
+                       request.resource.data.schemaVersion == 1 &&
+                       request.resource.data.createdAt != null &&
+                       academicYearExists(request.resource.data.academicYearId);
     }
     match /subjects/{id} {
       allow read: if true;
@@ -79,20 +111,42 @@ service cloud.firestore {
     match /academic_years/{id} {
       allow read: if true;
       allow write: if isAdmin();
+      
+      allow create: if request.resource.data.schemaVersion == 1 &&
+                       request.resource.data.year != null;
     }
+
+    // Classes
     match /classes/{id} {
       allow read: if true;
       allow write: if isAdmin();
+      
+      allow create: if request.resource.data.academicYearId != null &&
+                       academicYearExists(request.resource.data.academicYearId);
     }
     match /schedules/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Presensi
-    match /attendance/{id} {
+    // Presensi - CRITICAL for offline-sync validation
+    // Collection structure: attendance/{academicYearId}/records/{attendanceId}
+    match /attendance/{academicYearId}/records/{attendanceId} {
       allow read: if isSignedIn();
       allow write: if isStaff();
+      
+      // Validate attendance record has required fields
+      allow create: if request.resource.data.academicYearId == academicYearId &&
+                       request.resource.data.studentId != null &&
+                       request.resource.data.classId != null &&
+                       request.resource.data.date != null &&
+                       request.resource.data.syncStatus in ['pending', 'synced'] &&
+                       request.resource.data.schemaVersion == 1 &&
+                       request.resource.data.createdAt != null &&
+                       academicYearExists(academicYearId);
+      
+      allow update: if request.resource.data.updatedAt != null &&
+                       request.resource.data.syncStatus in ['pending', 'synced'];
     }
 
     // Layanan Surat & Klaim
@@ -101,6 +155,10 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update: if isStaff();
       allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid && resource.data.status == 'Pending');
+      
+      // Validate schema
+      allow write: if request.resource.data.schemaVersion == 1 &&
+                      request.resource.data.userId != null;
     }
     match /claim_requests/{id} {
       allow read: if isStaff() || (isSignedIn() && resource.data.userId == request.auth.uid);
@@ -113,6 +171,11 @@ service cloud.firestore {
     match /discipline_logs/{id} {
       allow read: if isSignedIn();
       allow write: if isStaff();
+      
+      allow create: if request.resource.data.studentId != null &&
+                       request.resource.data.violationId != null &&
+                       request.resource.data.schemaVersion == 1 &&
+                       request.resource.data.createdAt != null;
     }
     match /violations_master/{id} {
       allow read: if true;

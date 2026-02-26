@@ -126,7 +126,12 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }, [allStudents]);
 
     // Formatters
-    const formatTime = (t: any) => t ? String(t).substring(0, 5) : '-';
+    const formatTime = (t: any) => {
+        if (!t) return '-';
+        const value = String(t);
+        if (value.endsWith(' H')) return value;
+        return value.substring(0, 5);
+    };
     const toTitleCase = (str: string) => str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
     // --- PDF ENGINE ---
@@ -344,6 +349,18 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <col className="w-[76px]" />
                                         <col className="w-[76px]" />
                                         <col className="w-[80px]" />
+                                <table className="excel-table text-[10.5px] min-w-[780px]">
+                                    <colgroup>
+                                        <col className="w-[44px]" />
+                                        <col className="w-[88px]" />
+                                        <col className="w-[220px]" />
+                                        <col className="w-[96px]" />
+                                        <col className="w-[68px]" />
+                                        <col className="w-[68px]" />
+                                        <col className="w-[68px]" />
+                                        <col className="w-[68px]" />
+                                        <col className="w-[68px]" />
+                                        <col className="w-[92px]" />
                                     </colgroup>
                                     <thead>
                                         <tr>
@@ -357,6 +374,12 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <th className="text-center text-[10px] font-black tracking-wide">Ashar</th>
                                             <th className="text-center text-[10px] font-black tracking-wide">Pulang</th>
                                             <th className="text-center text-[10px] font-black tracking-wide">Ket</th>
+                                            <th className="text-[10px] font-black tracking-wide text-center">Masuk</th>
+                                            <th className="text-[10px] font-black tracking-wide text-center">Duha</th>
+                                            <th className="text-[10px] font-black tracking-wide text-center">Zuhur</th>
+                                            <th className="text-[10px] font-black tracking-wide text-center">Ashar</th>
+                                            <th className="text-[10px] font-black tracking-wide text-center">Pulang</th>
+                                            <th className="text-[10px] font-black tracking-wide text-center">Ket</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -371,6 +394,15 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <td className="text-center font-mono text-[10.5px]">{formatTime(r.zuhur)}</td>
                                                 <td className="text-center font-mono text-[10.5px]">{formatTime(r.ashar)}</td>
                                                 <td className="text-center font-mono text-[10.5px]">{formatTime(r.checkOut)}</td>
+                                                <td className="font-semibold text-center">{i + 1}</td>
+                                                <td className="font-mono">{r.idUnik || '-'}</td>
+                                                <td className="font-semibold">{toTitleCase(r.studentName)}</td>
+                                                <td>{r.class || '-'}</td>
+                                                <td className="text-center font-mono">{formatTime(r.checkIn)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.duha)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.zuhur)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.ashar)}</td>
+                                                <td className="text-center font-mono">{formatTime(r.checkOut)}</td>
                                                 <td className="text-center"><span className="px-2 py-0.5 rounded text-[9px] font-black bg-indigo-50 text-indigo-600">{r.status || '-'}</span></td>
                                             </tr>
                                         ))}
