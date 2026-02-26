@@ -121,6 +121,10 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return allStudents.filter(s => s.namaLengkap.toLowerCase().includes(q)).slice(0, 5);
     }, [allStudents, studentSearch]);
 
+    const studentsById = useMemo(() => {
+        return new Map(allStudents.filter(s => s.id).map(s => [s.id as string, s]));
+    }, [allStudents]);
+
     // Formatters
     const formatTime = (t: any) => {
         if (!t) return '-';
@@ -333,6 +337,18 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 {loading && <Loader2 className="w-4 h-4 animate-spin text-indigo-500" />}
                             </div>
                             <div className="overflow-x-auto">
+                                <table className="excel-table min-w-[920px]">
+                                    <colgroup>
+                                        <col className="w-[52px]" />
+                                        <col className="w-[90px]" />
+                                        <col className="w-[250px]" />
+                                        <col className="w-[110px]" />
+                                        <col className="w-[76px]" />
+                                        <col className="w-[76px]" />
+                                        <col className="w-[76px]" />
+                                        <col className="w-[76px]" />
+                                        <col className="w-[76px]" />
+                                        <col className="w-[80px]" />
                                 <table className="excel-table text-[10.5px] min-w-[780px]">
                                     <colgroup>
                                         <col className="w-[44px]" />
@@ -352,6 +368,12 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <th className="text-[10px] font-black tracking-wide">ID Unik</th>
                                             <th className="text-[10px] font-black tracking-wide">Nama Lengkap Siswa</th>
                                             <th className="text-[10px] font-black tracking-wide">Kelas</th>
+                                            <th className="text-center text-[10px] font-black tracking-wide">Masuk</th>
+                                            <th className="text-center text-[10px] font-black tracking-wide">Duha</th>
+                                            <th className="text-center text-[10px] font-black tracking-wide">Zuhur</th>
+                                            <th className="text-center text-[10px] font-black tracking-wide">Ashar</th>
+                                            <th className="text-center text-[10px] font-black tracking-wide">Pulang</th>
+                                            <th className="text-center text-[10px] font-black tracking-wide">Ket</th>
                                             <th className="text-[10px] font-black tracking-wide text-center">Masuk</th>
                                             <th className="text-[10px] font-black tracking-wide text-center">Duha</th>
                                             <th className="text-[10px] font-black tracking-wide text-center">Zuhur</th>
@@ -363,6 +385,15 @@ const Reports: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <tbody>
                                         {attendanceRecords.slice(0, 10).map((r, i) => (
                                             <tr key={i}>
+                                                <td className="font-mono text-[10.5px]">{i + 1}</td>
+                                                <td className="font-mono text-[10.5px]">{r.idUnik || studentsById.get(r.studentId)?.idUnik || '-'}</td>
+                                                <td className="font-semibold text-[10.5px]">{toTitleCase(r.studentName || studentsById.get(r.studentId)?.namaLengkap || '-')}</td>
+                                                <td className="text-[10.5px]">{r.class || studentsById.get(r.studentId)?.tingkatRombel || '-'}</td>
+                                                <td className="text-center font-mono text-[10.5px]">{formatTime(r.checkIn)}</td>
+                                                <td className="text-center font-mono text-[10.5px]">{formatTime(r.duha)}</td>
+                                                <td className="text-center font-mono text-[10.5px]">{formatTime(r.zuhur)}</td>
+                                                <td className="text-center font-mono text-[10.5px]">{formatTime(r.ashar)}</td>
+                                                <td className="text-center font-mono text-[10.5px]">{formatTime(r.checkOut)}</td>
                                                 <td className="font-semibold text-center">{i + 1}</td>
                                                 <td className="font-mono">{r.idUnik || '-'}</td>
                                                 <td className="font-semibold">{toTitleCase(r.studentName)}</td>
